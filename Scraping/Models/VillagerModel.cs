@@ -24,6 +24,10 @@
 
         public List<ItemsClass> DislikeGifts { get; set; } = new List<ItemsClass>();
 
+        public List<ItemsClass> NeutralGifts { get; set; } = new List<ItemsClass>();
+
+        public List<ItemsClass> HateGifts { get; set; } = new List<ItemsClass>();
+
         public string Marriage { get; set; } = string.Empty;
 
     }

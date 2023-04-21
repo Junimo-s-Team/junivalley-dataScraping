@@ -30,11 +30,14 @@ VillagerModel GetVillagerPrimaryData(string url)
         ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText,
         Marriage = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
         BestGifts = GetBestGiftsForVillager(htmlDocument),
-        LovedGifts = GetLovedGiftsForVillager(htmlDocument)
+        LovedGifts = GetGiftsForVillager(htmlDocument, idTable: 12),
+        LikedGifts = GetGiftsForVillager(htmlDocument, idTable: 14),
+        NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
+        DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
+        HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20)
     };
     return villager;
 }
-
 
 
 //GET Family
@@ -86,17 +89,17 @@ List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument)
 }
 
 
-//GET Loved Gifts
-List<ItemsClass> GetLovedGiftsForVillager(HtmlDocument htmlDocument)
+//GET Gifts
+List<ItemsClass> GetGiftsForVillager(HtmlDocument htmlDocument, int idTable)
 {
-    List<ItemsClass> lovedGifts = new List<ItemsClass>();
-    HtmlNodeCollection bestGiftsNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[12]/tbody");
+    List<ItemsClass> giftList = new List<ItemsClass>();
+    HtmlNodeCollection bestGiftsNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody");
 
     foreach (var bestGiftsNode in bestGiftsNodes)
     {
         var trNodes = bestGiftsNode.SelectNodes("tr");
 
-        for (int i = 1; i < trNodes.Count; i++)
+        for (int i = 0; i < trNodes.Count; i++)
         {
             var tdNodes = trNodes[i].SelectNodes("td");
 
@@ -104,17 +107,22 @@ List<ItemsClass> GetLovedGiftsForVillager(HtmlDocument htmlDocument)
             {
                 ItemsClass item = new ItemsClass
                 {
-                    Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", "") ?? "",
-                    Name = tdNodes[1].InnerText,
-                    Description = tdNodes[2].InnerText,
-                    Source = tdNodes[3].InnerText,
-                    Ingredients = GetIngredientsModel(tdNodes[4])
+                    Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", "") ?? string.Empty,
+                    Name = tdNodes[1].InnerText ?? string.Empty,
+                    Description = tdNodes[2].InnerText ?? string.Empty,
+                    Source = tdNodes[3].InnerText ?? string.Empty
                 };
-                lovedGifts.Add(item);
+
+                if (tdNodes.Count >= 5 && tdNodes[4].ChildNodes.Any())
+                {
+                    item.Ingredients = GetIngredientsModel(tdNodes[4]);
+                }
+
+                giftList.Add(item);
             }
         }
     }
-    return lovedGifts;
+    return giftList;
 }
 
 
