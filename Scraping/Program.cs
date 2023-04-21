@@ -13,6 +13,7 @@ HtmlDocument GetDocument(string url)
 }
 
 
+//Villager Detail
 VillagerModel GetVillagerPrimaryData(string url)
 {
     HtmlDocument htmlDocument = GetDocument(url);
@@ -24,6 +25,7 @@ VillagerModel GetVillagerPrimaryData(string url)
         Name = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxheader\"]").InnerText,
         Birthday = $"{birthdayStation.Trim()} {birthdayNumber.Trim()}",
         Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText,
+        Family = GetFamilyPeopleForVillager(htmlDocument),
         LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText,
         ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText,
         Marriage = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
@@ -34,6 +36,33 @@ VillagerModel GetVillagerPrimaryData(string url)
 }
 
 
+
+//GET Family
+List<FamilyModel> GetFamilyPeopleForVillager(HtmlDocument htmlDocument)
+{
+    List<FamilyModel> familyList = new List<FamilyModel>();
+    HtmlNodeCollection familyNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]");
+
+    foreach (HtmlNode tdNode in familyNodes)
+    {
+        foreach (HtmlNode pNode in tdNode.Descendants("p"))
+        {
+            FamilyModel person = new FamilyModel
+            {
+                Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", "") ?? string.Empty,
+                Name = pNode.SelectSingleNode("a")?.InnerText ?? string.Empty,
+                Description = pNode.InnerText.Substring(pNode.InnerText.IndexOf("(") + 1).Replace("(", string.Empty).Replace(")", string.Empty) ?? string.Empty
+        };
+            familyList.Add(person);
+        }
+    }
+
+    return familyList;
+}
+
+
+
+//GET Best Gifts
 List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument)
 {
     List<BestGiftsModel> bestGifts = new List<BestGiftsModel>();
@@ -57,7 +86,7 @@ List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument)
 }
 
 
-
+//GET Loved Gifts
 List<ItemsClass> GetLovedGiftsForVillager(HtmlDocument htmlDocument)
 {
     List<ItemsClass> lovedGifts = new List<ItemsClass>();
@@ -88,6 +117,8 @@ List<ItemsClass> GetLovedGiftsForVillager(HtmlDocument htmlDocument)
     return lovedGifts;
 }
 
+
+//GET Ingredients
 List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
 {
     List<IngredientsModel> ingredientList = new List<IngredientsModel>();
@@ -117,4 +148,3 @@ List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
     }
     return ingredientList;
 }
-

@@ -10,6 +10,8 @@
 
         public string Address { get; set; } = string.Empty;
 
+        public List<FamilyModel> Family = new List<FamilyModel>();
+
         public string LivesIn { get; set; } = string.Empty;
 
         public string ClinicVisit { get; set; } = string.Empty;
