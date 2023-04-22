@@ -23,20 +23,43 @@ VillagerModel GetVillagerPrimaryData(string url)
     VillagerModel villager = new VillagerModel
     {
         Name = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxheader\"]").InnerText,
+        Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Replace("&#8220;", ""),
         Birthday = $"{birthdayStation.Trim()} {birthdayNumber.Trim()}",
         Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText,
         Family = GetFamilyPeopleForVillager(htmlDocument),
         LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText,
-        ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText,
+        ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Replace("&#160;", ""),
         Marriage = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
         BestGifts = GetBestGiftsForVillager(htmlDocument),
         LovedGifts = GetGiftsForVillager(htmlDocument, idTable: 12),
         LikedGifts = GetGiftsForVillager(htmlDocument, idTable: 14),
         NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
         DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
-        HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20)
+        HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20),
+        Portraits = GetPortraitsForVillager(htmlDocument)
     };
+
     return villager;
+}
+
+List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
+{
+    List<string> portraitImagesList = new List<string>();
+    HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/ul[7]/li");
+
+    foreach (HtmlNode liNode in liNodes)
+    {
+        foreach (HtmlNode div in liNode.Descendants("div"))
+        {
+            var imgNode = div.SelectSingleNode("./div[1]/div/a/img");
+            if (imgNode != null)
+            {
+                var images = imgNode.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                portraitImagesList.Add(images);
+            }
+        }
+    }
+    return portraitImagesList;
 }
 
 
@@ -62,7 +85,6 @@ List<FamilyModel> GetFamilyPeopleForVillager(HtmlDocument htmlDocument)
 
     return familyList;
 }
-
 
 
 //GET Best Gifts

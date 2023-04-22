@@ -6,6 +6,8 @@
 
         public string Name { get; set; } = string.Empty;
 
+        public string Description { get; set; } = string.Empty;
+
         public string Birthday { get; set; } = string.Empty;
 
         public string Address { get; set; } = string.Empty;
@@ -29,6 +31,8 @@
         public List<ItemsClass> HateGifts { get; set; } = new List<ItemsClass>();
 
         public string Marriage { get; set; } = string.Empty;
+
+        public List<string> Portraits { get; set; } = new List<string>();
 
     }
 }
