@@ -30,6 +30,8 @@
 
         public List<ItemsClass> HateGifts { get; set; } = new List<ItemsClass>();
 
+        public List<HeartEventsModel> HeartEvents { get; set; } = new List<HeartEventsModel>();
+
         public string Marriage { get; set; } = string.Empty;
 
         public List<string> Portraits { get; set; } = new List<string>();

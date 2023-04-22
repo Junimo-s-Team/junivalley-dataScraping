@@ -36,31 +36,64 @@ VillagerModel GetVillagerPrimaryData(string url)
         NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
         DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
         HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20),
+        HeartEvents = GetHeartEventsForVillager(htmlDocument),
         Portraits = GetPortraitsForVillager(htmlDocument)
     };
 
     return villager;
 }
 
-List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
-{
-    List<string> portraitImagesList = new List<string>();
-    HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/ul[7]/li");
 
-    foreach (HtmlNode liNode in liNodes)
+//GET Heart Events
+List<HeartEventsModel> GetHeartEventsForVillager(HtmlDocument htmlDocument)
+{
+    List<HeartEventsModel> heartEventList = new List<HeartEventsModel>();
+    HtmlNodeCollection heartNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div");
+
+    foreach (HtmlNode heartNode in heartNodes)
     {
-        foreach (HtmlNode div in liNode.Descendants("div"))
+        //Title
+        if (heartNode.SelectNodes("h3").Any())
         {
-            var imgNode = div.SelectSingleNode("./div[1]/div/a/img");
-            if (imgNode != null)
+            for (int i = 6; i <= 14; i++)
             {
-                var images = imgNode.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                portraitImagesList.Add(images);
+                HeartEventsModel heartEvents = new HeartEventsModel
+                {
+                    Title = heartNode.Descendants("h3").ElementAtOrDefault(i - 1)?.SelectSingleNode("span")?.InnerText ?? string.Empty,
+                };
+                heartEventList.Add(heartEvents);
             }
         }
+        //Heart image
+        //if (heartNode.SelectNodes("p").Descendants("img").Any())
+        //{
+        //    HtmlNodeCollection pNodes = heartNode.SelectNodes("p");
+        //    for (int i = 9; i <= 27; i += 2)
+        //    {
+        //        HeartEventsModel heartEvents = new HeartEventsModel
+        //        {
+        //            HeartsImage = pNodes.ElementAtOrDefault(i - 1)?.Descendants("img").FirstOrDefault()?.GetAttributeValue("src", string.Empty) ?? string.Empty
+        //        };
+        //        heartEventList.Add(heartEvents);
+        //    }
+        //}
+
+        //if (heartNode.SelectNodes("p").Any())
+        //{
+        //    HtmlNodeCollection pNodes = heartNode.SelectNodes("p");
+        //    for (int i = 10; i <= pNodes.Count; i += 2)
+        //    {
+        //        HeartEventsModel heartEvents = new HeartEventsModel
+        //        {
+        //            Place = pNodes.ElementAtOrDefault(i - 1)?.InnerText ?? string.Empty,
+        //        };
+        //        heartEventList.Add(heartEvents);
+        //    }
+        //}
     }
-    return portraitImagesList;
+    return heartEventList;
 }
+
 
 
 //GET Family
@@ -177,4 +210,26 @@ List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
         }
     }
     return ingredientList;
+}
+
+
+//GET Portraits Images
+List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
+{
+    List<string> portraitImagesList = new List<string>();
+    HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/ul[7]/li");
+
+    foreach (HtmlNode liNode in liNodes)
+    {
+        foreach (HtmlNode div in liNode.Descendants("div"))
+        {
+            var imgNode = div.SelectSingleNode("./div[1]/div/a/img");
+            if (imgNode != null)
+            {
+                var images = imgNode.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                portraitImagesList.Add(images);
+            }
+        }
+    }
+    return portraitImagesList;
 }
