@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-	internal class MoviesModel
+	internal class MoviesConcessionsModel
 	{
 		public string Type = string.Empty;
 

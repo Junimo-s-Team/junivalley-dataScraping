@@ -37,6 +37,7 @@ VillagerModel GetVillagerPrimaryData(string url)
         DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
         HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20),
         Movies = GetMoviesForVillager(htmlDocument),
+        Concessions = GetConcessionsForVillager(htmlDocument),
         HeartEvents = GetHeartEventsForVillager(htmlDocument),
         Portraits = GetPortraitsForVillager(htmlDocument)
     };
@@ -216,9 +217,9 @@ List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
 
 
 //GET Movies
-List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
+List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument)
 {
-    List<MoviesModel> movieList = new List<MoviesModel>();
+    List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
     HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[21]/tbody/tr/td[1]/table/tbody");
 
     foreach (HtmlNode table in movieNodes)
@@ -226,7 +227,7 @@ List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
         HtmlNodeCollection rows = table.SelectNodes("tr");
         for (int i = 1; i <= rows.Count; i++)
         {
-            MoviesModel movies = new MoviesModel();
+            MoviesConcessionsModel movies = new MoviesConcessionsModel();
 
             // Obtiene valores fuera de <p>
             movies.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
@@ -246,7 +247,7 @@ List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
                     if (!string.IsNullOrEmpty(pValue))
                     {
                         // Utiliza pIndex para el valor de <p>
-                        MoviesModel moviesWithPValue = new MoviesModel();
+                        MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
                         moviesWithPValue.Type = movies.Type;
                         moviesWithPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
                         moviesWithPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
@@ -255,7 +256,7 @@ List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
                     else
                     {
                         // Si no tiene el atributo 'value', entonces es <p>
-                        MoviesModel moviesWithoutPValue = new MoviesModel();
+                        MoviesConcessionsModel moviesWithoutPValue = new MoviesConcessionsModel();
                         moviesWithoutPValue.Type = movies.Type;
                         moviesWithoutPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
                         moviesWithoutPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
@@ -270,8 +271,59 @@ List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
 }
 
 
-//GET Portraits Images
-List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
+//GET Concessions
+List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument)
+{
+    List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>();
+    HtmlNodeCollection concessionNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[21]/tbody/tr/td[3]/table/tbody");
+
+    foreach (HtmlNode table in concessionNodes)
+    {
+        HtmlNodeCollection rows = table.SelectNodes("tr");
+        for (int i = 1; i <= rows.Count; i++)
+        {
+            var tdNode = table.SelectSingleNode($"tr[{i}]/td");
+
+            MoviesConcessionsModel concessions = new MoviesConcessionsModel();
+            // Obtiene valores que no tienen posicion
+            concessions.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
+            concessions.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
+            concessions.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+            concessionList.Add(concessions);
+
+            // Si tengo valores <i> dentro de los td (en este caso siempre vendra como texto unicamente)
+            if (tdNode != null)
+            {
+                if (tdNode.Descendants("i").Any())
+                {
+                    // guardar texto vacio
+                    MoviesConcessionsModel concessionI = new MoviesConcessionsModel();
+                    concessionI.Title = table.SelectSingleNode($"tr[{i}]/td/i")?.InnerText ?? string.Empty;
+                    concessionList.Add(concessionI);
+                }
+
+                foreach (HtmlNode childNode in tdNode.ChildNodes)
+                {
+                    if (childNode.Name == "#text" || childNode.Name == "img")
+                    {
+                        MoviesConcessionsModel concessionContent = new MoviesConcessionsModel();
+                        concessionContent.Title = childNode.InnerText ?? string.Empty;
+                        concessionContent.Image = childNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                        concessionList.Add(concessionContent);
+                    } else
+                    {
+
+                    }
+                }
+            }
+        }
+    }
+    return concessionList;
+}
+
+
+    //GET Portraits Images
+    List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
 {
     List<string> portraitImagesList = new List<string>();
     HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/ul[7]/li");

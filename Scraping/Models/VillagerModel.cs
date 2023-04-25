@@ -30,7 +30,9 @@
 
         public List<ItemsClass> HateGifts { get; set; } = new List<ItemsClass>();
 
-        public List<MoviesModel> Movies { get; set; } = new List<MoviesModel>();
+        public List<MoviesConcessionsModel> Movies { get; set; } = new List<MoviesConcessionsModel>();
+
+        public List<MoviesConcessionsModel> Concessions { get; set; } = new List<MoviesConcessionsModel>();
 
         public List<HeartEventsModel> HeartEvents { get; set; } = new List<HeartEventsModel>();
 
