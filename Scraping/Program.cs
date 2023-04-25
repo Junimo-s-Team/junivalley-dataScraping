@@ -44,56 +44,6 @@ VillagerModel GetVillagerPrimaryData(string url)
     return villager;
 }
 
-List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
-{
-    List<MoviesModel> movieList = new List<MoviesModel>();
-    HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[21]/tbody/tr/td[1]/table/tbody");
-
-    foreach (HtmlNode table in movieNodes)
-    {
-        HtmlNodeCollection rows = table.SelectNodes("tr");
-        for (int i = 1; i <= rows.Count; i++)
-        {
-            MoviesModel movies = new MoviesModel();
-
-            //obtener el tipo unicamente cogiendo <th>
-            movies.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
-
-            //si tengo valores <p> dentro de los td
-            var tdNode = table.SelectSingleNode($"tr[{i}]/td");
-            if (tdNode != null && tdNode.Descendants("p").Any())
-            {
-                foreach (HtmlNode pNode in tdNode.Descendants("p"))
-                {
-                    string pValue = pNode.GetAttributeValue("value", string.Empty);
-                    if (!string.IsNullOrEmpty(pValue))
-                    {
-                        // Si el atributo 'value' tiene un valor, entonces es <p[value]>
-                        // Utiliza pValue para acceder al valor del atributo 'value'
-                        movies.Title = table.SelectSingleNode($"tr[{i}]/td/p[@value='{pValue}']/text()")?.InnerText ?? string.Empty;
-                        movies.Image = table.SelectSingleNode($"tr[{i}]/td/p[@value='{pValue}']/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                    }
-                    else
-                    {
-                        // Si no tiene el atributo 'value', entonces es <p>
-                        movies.Title = table.SelectSingleNode($"tr[{i}]/td/p/text()")?.InnerText ?? string.Empty;
-                        movies.Image = table.SelectSingleNode($"tr[{i}]/td/p/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                    }
-                    movieList.Add(movies);
-                }
-            }
-            else
-            {
-                // No hay elementos <p> en el <td>, puedes acceder directamente a su contenido
-                movies.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                movies.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
-                movieList.Add(movies);
-            }
-        }
-    }
-    return movieList;
-}
-
 
 
 //GET Heart Events
@@ -262,6 +212,61 @@ List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
         }
     }
     return ingredientList;
+}
+
+
+//GET Movies
+List<MoviesModel> GetMoviesForVillager(HtmlDocument htmlDocument)
+{
+    List<MoviesModel> movieList = new List<MoviesModel>();
+    HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[21]/tbody/tr/td[1]/table/tbody");
+
+    foreach (HtmlNode table in movieNodes)
+    {
+        HtmlNodeCollection rows = table.SelectNodes("tr");
+        for (int i = 1; i <= rows.Count; i++)
+        {
+            MoviesModel movies = new MoviesModel();
+
+            // Obtiene valores fuera de <p>
+            movies.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
+            movies.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
+            movies.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+            movieList.Add(movies);
+
+            // Si tengo valores <p> dentro de los td
+            var tdNode = table.SelectSingleNode($"tr[{i}]/td");
+            if (tdNode != null && tdNode.Descendants("p").Any())
+            {
+                int pIndex = 1; // Índice del elemento <p>
+                foreach (HtmlNode pNode in tdNode.Descendants("p"))
+                {
+                    //Comprobar si <p> contiene [valor]
+                    string pValue = pNode.GetAttributeValue("value", string.Empty);
+                    if (!string.IsNullOrEmpty(pValue))
+                    {
+                        // Utiliza pIndex para el valor de <p>
+                        MoviesModel moviesWithPValue = new MoviesModel();
+                        moviesWithPValue.Type = movies.Type;
+                        moviesWithPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
+                        moviesWithPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                        movieList.Add(moviesWithPValue);
+                    }
+                    else
+                    {
+                        // Si no tiene el atributo 'value', entonces es <p>
+                        MoviesModel moviesWithoutPValue = new MoviesModel();
+                        moviesWithoutPValue.Type = movies.Type;
+                        moviesWithoutPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
+                        moviesWithoutPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                        movieList.Add(moviesWithoutPValue);
+                        pIndex++; // Incrementa el índice del elemento <p> para el siguiente bucle
+                    }
+                }
+            }
+        }
+    }
+    return movieList;
 }
 
 
