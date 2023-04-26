@@ -31,6 +31,7 @@ VillagerModel GetVillagerPrimaryData(string url)
         ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Replace("&#160;", ""),
         Marriage = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
         BestGifts = GetBestGiftsForVillager(htmlDocument),
+        TimeLocationSpring = GetTimeLocation(htmlDocument, idTableSeason: 2),
         LovedGifts = GetGiftsForVillager(htmlDocument, idTable: 12),
         LikedGifts = GetGiftsForVillager(htmlDocument, idTable: 14),
         NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
@@ -44,6 +45,49 @@ VillagerModel GetVillagerPrimaryData(string url)
 
     return villager;
 }
+
+List<TimeLocationModel> GetTimeLocation(HtmlDocument htmlDocument, int idTableSeason)
+{
+    List<TimeLocationModel> timeLocationList = new List<TimeLocationModel>();
+    HtmlNodeCollection seasonInfoNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTableSeason}]/tbody/tr[2]/td");
+
+    foreach (HtmlNode content in seasonInfoNodes)
+    {
+        if (content.Descendants("p").Any() || content.Descendants("table").Any())
+        {
+            foreach (HtmlNode pNode in content.Descendants("p"))
+            {
+                var tableNode = content.Descendants("table").FirstOrDefault();
+                if (tableNode != null)
+                {
+                    foreach (var tableContentNode in tableNode.Descendants("tr"))
+                    {
+                        if (tableContentNode.Descendants("td").Any())
+                        {
+                            var tdNodes = tableContentNode.Descendants("td").ToList();
+                            if (tdNodes.Count >= 2)
+                            {
+                                TimeLocationModel timeLocationInfo = new TimeLocationModel()
+                                {
+                                    Day = pNode?.InnerText ?? string.Empty,
+                                    Time = tdNodes[0]?.InnerText ?? string.Empty,
+                                    Location = tdNodes[1]?.InnerText ?? string.Empty
+                                };
+                                timeLocationList.Add(timeLocationInfo);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return timeLocationList;
+}
+
+
+
+
+
 
 
 
