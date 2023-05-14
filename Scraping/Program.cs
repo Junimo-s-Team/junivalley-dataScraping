@@ -1,5 +1,9 @@
 ﻿using HtmlAgilityPack;
 using Scraping.Models;
+using Newtonsoft.Json;
+using System;
+using System.IO;
+
 
 string url = "https://stardewvalleywiki.com";
 
@@ -47,13 +51,13 @@ VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicV
                    : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
         BestGifts = GetBestGiftsForVillager(htmlDocument, hasFamily, hasClinicVisit),
         //TimeLocationSpring = GetTimeLocation(htmlDocument, idTableSeason: 2),
-        //LovedGifts = GetGiftsForVillager(htmlDocument, idTable: 12),
-        //LikedGifts = GetGiftsForVillager(htmlDocument, idTable: 14),
-        //NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
-        //DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
-        //HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20),
-        //Movies = GetMoviesForVillager(htmlDocument),
-        //Concessions = GetConcessionsForVillager(htmlDocument),
+        LovedGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 13 : 12),
+        LikedGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 15 : 14),
+        NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 17 : 16),
+        DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 19 : 18),
+        HateGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 21 : 20),
+        //Movies = GetMoviesForVillager(htmlDocument, idTable: hasFamily ? 22 : 21),
+        //Concessions = GetConcessionsForVillager(htmlDocument, idTable: hasFamily ? 22 : 21),
         //HeartEvents = GetHeartEventsForVillager(htmlDocument),
         //Portraits = GetPortraitsForVillager(htmlDocument)
 
@@ -81,6 +85,12 @@ VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicV
         //null
         villager.ClinicVisit = string.Empty;
     }
+    string json = JsonConvert.SerializeObject(villager);
+    string filePath = "Villagers-test.json";
+    string fullPath = Path.GetFullPath(filePath);
+    File.WriteAllText(filePath, json);
+
+    Console.WriteLine("Ruta completa del archivo: " + fullPath);
 
     return villager;
 }
@@ -312,10 +322,10 @@ List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
 
 
 //GET Movies
-List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument)
+List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
 {
     List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
-    HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[21]/tbody/tr/td[1]/table/tbody");
+    HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
 
     foreach (HtmlNode table in movieNodes)
     {
@@ -367,10 +377,10 @@ List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument)
 
 
 //GET Concessions
-List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument)
+List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument, int idTable)
 {
     List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>();
-    HtmlNodeCollection concessionNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/table[21]/tbody/tr/td[3]/table/tbody");
+    HtmlNodeCollection concessionNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[3]/table/tbody");
 
     foreach (HtmlNode table in concessionNodes)
     {
