@@ -18,6 +18,8 @@
 
         public string LivesIn { get; set; } = string.Empty;
 
+        public bool HasClinicVisit { get; set; }
+
         public string ClinicVisit { get; set; } = string.Empty;
 
         public List<TimeLocationModel> TimeLocationSpring { get; set; } = new List<TimeLocationModel>();

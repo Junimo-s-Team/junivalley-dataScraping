@@ -5,13 +5,17 @@ string url = "https://stardewvalleywiki.com";
 
 List<VillagerModel> villagers = new List<VillagerModel>
 {
-    new VillagerModel{ Name = "Leah", HasFamily = false},
-    new VillagerModel{ Name = "Alex", HasFamily = true}
+    new VillagerModel{ Name = "Alex", HasFamily = true, HasClinicVisit = true },
+    new VillagerModel{ Name = "Elliot", HasFamily = false, HasClinicVisit = true },
+    new VillagerModel{ Name = "Harvey", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Sam", HasFamily = true, HasClinicVisit = true },
+    new VillagerModel{ Name = "Sebastian", HasFamily = true, HasClinicVisit = true },
+    new VillagerModel{ Name = "Shane", HasFamily = true, HasClinicVisit = false }
 };
 
 foreach (var villager in villagers)
 {
-    VillagerModel villagerData = GetVillagerPrimaryData($"{url}/{villager.Name}", villager.HasFamily);
+    VillagerModel villagerData = GetVillagerPrimaryData($"{url}/{villager.Name}", villager.HasFamily, villager.HasClinicVisit);
 }
 
 
@@ -24,7 +28,7 @@ HtmlDocument GetDocument(string url)
 
 
 //Villager Detail
-VillagerModel GetVillagerPrimaryData(string url, bool hasFamily)
+VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicVisit)
 {
     HtmlDocument htmlDocument = GetDocument(url);
     string birthdayStation = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]/span/a").InnerText;
@@ -38,22 +42,45 @@ VillagerModel GetVillagerPrimaryData(string url, bool hasFamily)
         Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText,
         Family = hasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
         LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText,
-        ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Replace("&#160;", ""),
-        Marriage = hasFamily
+        Marriage = hasFamily || hasClinicVisit
                    ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText
                    : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
-        BestGifts = GetBestGiftsForVillager(htmlDocument),
-        TimeLocationSpring = GetTimeLocation(htmlDocument, idTableSeason: 2),
-        LovedGifts = GetGiftsForVillager(htmlDocument, idTable: 12),
-        LikedGifts = GetGiftsForVillager(htmlDocument, idTable: 14),
-        NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
-        DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
-        HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20),
+        BestGifts = GetBestGiftsForVillager(htmlDocument, hasFamily, hasClinicVisit),
+        //TimeLocationSpring = GetTimeLocation(htmlDocument, idTableSeason: 2),
+        //LovedGifts = GetGiftsForVillager(htmlDocument, idTable: 12),
+        //LikedGifts = GetGiftsForVillager(htmlDocument, idTable: 14),
+        //NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: 16),
+        //DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: 18),
+        //HateGifts = GetGiftsForVillager(htmlDocument, idTable: 20),
         //Movies = GetMoviesForVillager(htmlDocument),
         //Concessions = GetConcessionsForVillager(htmlDocument),
-        HeartEvents = GetHeartEventsForVillager(htmlDocument),
-        Portraits = GetPortraitsForVillager(htmlDocument)
+        //HeartEvents = GetHeartEventsForVillager(htmlDocument),
+        //Portraits = GetPortraitsForVillager(htmlDocument)
+
     };
+
+    //Check clinic visit
+    if (hasClinicVisit)
+    {
+        //Check family
+        if (hasFamily)
+        {
+            //tr value 9
+            villager.ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]").InnerText.Replace("&#160;", "");
+        }
+        //not family
+        else
+        {
+            //tr value 8
+            villager.ClinicVisit = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Replace("&#160;", "");
+        };
+    }
+    //not clinic visit
+    else
+    {
+        //null
+        villager.ClinicVisit = string.Empty;
+    }
 
     return villager;
 }
@@ -95,9 +122,6 @@ List<TimeLocationModel> GetTimeLocation(HtmlDocument htmlDocument, int idTableSe
     }
     return timeLocationList;
 }
-
-
-
 
 
 
@@ -180,10 +204,22 @@ List<FamilyModel> GetFamilyPeopleForVillager(HtmlDocument htmlDocument)
 
 
 //GET Best Gifts
-List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument)
+List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument, bool hasFamily, bool hasClinicVisit)
 {
     List<BestGiftsModel> bestGifts = new List<BestGiftsModel>();
-    HtmlNodeCollection bestGiftsNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]");
+    int trIndex = 10; // Índice predeterminado para el último tr
+
+    if (!hasFamily && !hasClinicVisit)
+    {
+        trIndex = 8;
+    }
+    else if (!hasFamily || !hasClinicVisit)
+    {
+        trIndex = 9;
+    }
+
+    string fullXPath = $"/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[{trIndex}]/td[2]";
+    HtmlNodeCollection bestGiftsNodes = htmlDocument.DocumentNode.SelectNodes(fullXPath);
 
     foreach (var bestGiftsNode in bestGiftsNodes)
     {
@@ -191,10 +227,13 @@ List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument)
 
         for (int i = 0; i < childNodes.Count; i++)
         {
+            string nameXPath = $"/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[{trIndex}]/td[2]/span[{i + 1}]/a";
+            string imageXPath = $"/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[{trIndex}]/td[2]/span[{i + 1}]/img";
+
             BestGiftsModel item = new BestGiftsModel
             {
-                Name = childNodes[i].SelectSingleNode($"/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]/span[{i + 1}]/a").InnerText ?? "",
-                Image = childNodes[i].SelectSingleNode($"/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]/span[{i + 1}]/img").GetAttributeValue("src", "") ?? ""
+                Name = childNodes[i].SelectSingleNode(nameXPath)?.InnerText ?? "",
+                Image = childNodes[i].SelectSingleNode(imageXPath)?.GetAttributeValue("src", "") ?? ""
             };
             bestGifts.Add(item);
         }
