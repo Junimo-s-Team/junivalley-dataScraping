@@ -6,6 +6,8 @@ using System.IO;
 
 
 string url = "https://stardewvalleywiki.com";
+List<VillagerModel> villagersData = new List<VillagerModel>();
+int villagerId = 0;
 
 List<VillagerModel> villagers = new List<VillagerModel>
 {
@@ -19,7 +21,9 @@ List<VillagerModel> villagers = new List<VillagerModel>
 
 foreach (var villager in villagers)
 {
-    VillagerModel villagerData = GetVillagerPrimaryData($"{url}/{villager.Name}", villager.HasFamily, villager.HasClinicVisit);
+    villagerId ++;
+    VillagerModel villagerData = GetVillagerPrimaryData($"{url}/{villager.Name}", villagerId, villager.HasFamily, villager.HasClinicVisit);
+    villagersData.Add(villagerData);
 }
 
 
@@ -32,7 +36,7 @@ HtmlDocument GetDocument(string url)
 
 
 //Villager Detail
-VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicVisit)
+VillagerModel GetVillagerPrimaryData(string url, int id, bool hasFamily, bool hasClinicVisit)
 {
     HtmlDocument htmlDocument = GetDocument(url);
     string birthdayStation = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]/span/a").InnerText;
@@ -40,13 +44,14 @@ VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicV
 
     VillagerModel villager = new VillagerModel
     {
+        Id = villagerId,
         Name = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxheader\"]").InnerText,
         Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Replace("&#8220;", ""),
         Birthday = $"{birthdayStation.Trim()} {birthdayNumber.Trim()}",
         Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText,
         Family = hasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
         LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText,
-        Marriage = hasFamily || hasClinicVisit
+        Marriage = hasFamily
                    ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText
                    : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
         BestGifts = GetBestGiftsForVillager(htmlDocument, hasFamily, hasClinicVisit),
@@ -56,8 +61,8 @@ VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicV
         NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 17 : 16),
         DislikeGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 19 : 18),
         HateGifts = GetGiftsForVillager(htmlDocument, idTable: hasFamily ? 21 : 20),
-        //Movies = GetMoviesForVillager(htmlDocument, idTable: hasFamily ? 22 : 21),
-        //Concessions = GetConcessionsForVillager(htmlDocument, idTable: hasFamily ? 22 : 21),
+        Movies = GetMoviesForVillager(htmlDocument, idTable: hasFamily ? 22 : 21),
+        Concessions = GetConcessionsForVillager(htmlDocument, idTable: hasFamily ? 22 : 21),
         //HeartEvents = GetHeartEventsForVillager(htmlDocument),
         //Portraits = GetPortraitsForVillager(htmlDocument)
 
@@ -85,7 +90,7 @@ VillagerModel GetVillagerPrimaryData(string url, bool hasFamily, bool hasClinicV
         //null
         villager.ClinicVisit = string.Empty;
     }
-    string json = JsonConvert.SerializeObject(villager);
+    string json = JsonConvert.SerializeObject(villagersData);
     string filePath = "Villagers-test.json";
     string fullPath = Path.GetFullPath(filePath);
     File.WriteAllText(filePath, json);
@@ -270,6 +275,7 @@ List<ItemsClass> GetGiftsForVillager(HtmlDocument htmlDocument, int idTable)
             {
                 ItemsClass item = new ItemsClass
                 {
+                    Id = i-1,
                     Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", "") ?? string.Empty,
                     Name = tdNodes[1].InnerText ?? string.Empty,
                     Description = tdNodes[2].InnerText ?? string.Empty,
@@ -327,46 +333,49 @@ List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int
     List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
     HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
 
-    foreach (HtmlNode table in movieNodes)
+    if (movieNodes != null)
     {
-        HtmlNodeCollection rows = table.SelectNodes("tr");
-        for (int i = 1; i <= rows.Count; i++)
+        foreach (HtmlNode table in movieNodes)
         {
-            MoviesConcessionsModel movies = new MoviesConcessionsModel();
-
-            // Obtiene valores fuera de <p>
-            movies.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
-            movies.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
-            movies.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-            movieList.Add(movies);
-
-            // Si tengo valores <p> dentro de los td
-            var tdNode = table.SelectSingleNode($"tr[{i}]/td");
-            if (tdNode != null && tdNode.Descendants("p").Any())
+            HtmlNodeCollection rows = table.SelectNodes("tr");
+            for (int i = 1; i <= rows.Count; i++)
             {
-                int pIndex = 1; // Índice del elemento <p>
-                foreach (HtmlNode pNode in tdNode.Descendants("p"))
+                MoviesConcessionsModel movies = new MoviesConcessionsModel();
+
+                // Obtiene valores fuera de <p>
+                movies.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
+                movies.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
+                movies.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                movieList.Add(movies);
+
+                // Si tengo valores <p> dentro de los td
+                var tdNode = table.SelectSingleNode($"tr[{i}]/td");
+                if (tdNode != null && tdNode.Descendants("p").Any())
                 {
-                    //Comprobar si <p> contiene [valor]
-                    string pValue = pNode.GetAttributeValue("value", string.Empty);
-                    if (!string.IsNullOrEmpty(pValue))
+                    int pIndex = 1; // Índice del elemento <p>
+                    foreach (HtmlNode pNode in tdNode.Descendants("p"))
                     {
-                        // Utiliza pIndex para el valor de <p>
-                        MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
-                        moviesWithPValue.Type = movies.Type;
-                        moviesWithPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
-                        moviesWithPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                        movieList.Add(moviesWithPValue);
-                    }
-                    else
-                    {
-                        // Si no tiene el atributo 'value', entonces es <p>
-                        MoviesConcessionsModel moviesWithoutPValue = new MoviesConcessionsModel();
-                        moviesWithoutPValue.Type = movies.Type;
-                        moviesWithoutPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
-                        moviesWithoutPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                        movieList.Add(moviesWithoutPValue);
-                        pIndex++; // Incrementa el índice del elemento <p> para el siguiente bucle
+                        //Comprobar si <p> contiene [valor]
+                        string pValue = pNode.GetAttributeValue("value", string.Empty);
+                        if (!string.IsNullOrEmpty(pValue))
+                        {
+                            // Utiliza pIndex para el valor de <p>
+                            MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
+                            moviesWithPValue.Type = movies.Type;
+                            moviesWithPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
+                            moviesWithPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                            movieList.Add(moviesWithPValue);
+                        }
+                        else
+                        {
+                            // Si no tiene el atributo 'value', entonces es <p>
+                            MoviesConcessionsModel moviesWithoutPValue = new MoviesConcessionsModel();
+                            moviesWithoutPValue.Type = movies.Type;
+                            moviesWithoutPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
+                            moviesWithoutPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                            movieList.Add(moviesWithoutPValue);
+                            pIndex++; // Incrementa el índice del elemento <p> para el siguiente bucle
+                        }
                     }
                 }
             }
@@ -379,45 +388,48 @@ List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int
 //GET Concessions
 List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument, int idTable)
 {
-    List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>();
+    List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>(); ///html/body/div[3]/div[3]/div[5]/div/table[22]/tbody/tr/td[3]/table/tbody //alex
     HtmlNodeCollection concessionNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[3]/table/tbody");
 
-    foreach (HtmlNode table in concessionNodes)
-    {
-        HtmlNodeCollection rows = table.SelectNodes("tr");
-        for (int i = 1; i <= rows.Count; i++)
+    if (concessionNodes != null) {
+        foreach (HtmlNode table in concessionNodes)
         {
-            var tdNode = table.SelectSingleNode($"tr[{i}]/td");
-
-            MoviesConcessionsModel concessions = new MoviesConcessionsModel();
-            // Obtiene valores que no tienen posicion
-            concessions.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
-            concessions.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
-            concessions.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-            concessionList.Add(concessions);
-
-            // Si tengo valores <i> dentro de los td (en este caso siempre vendra como texto unicamente)
-            if (tdNode != null)
+            HtmlNodeCollection rows = table.SelectNodes("tr");
+            for (int i = 1; i <= rows.Count; i++)
             {
-                if (tdNode.Descendants("i").Any())
-                {
-                    // guardar texto vacio
-                    MoviesConcessionsModel concessionI = new MoviesConcessionsModel();
-                    concessionI.Title = table.SelectSingleNode($"tr[{i}]/td/i")?.InnerText ?? string.Empty;
-                    concessionList.Add(concessionI);
-                }
+                var tdNode = table.SelectSingleNode($"tr[{i}]/td");
 
-                foreach (HtmlNode childNode in tdNode.ChildNodes)
-                {
-                    if (childNode.Name == "#text" || childNode.Name == "img")
-                    {
-                        MoviesConcessionsModel concessionContent = new MoviesConcessionsModel();
-                        concessionContent.Title = childNode.InnerText ?? string.Empty;
-                        concessionContent.Image = childNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                        concessionList.Add(concessionContent);
-                    } else
-                    {
+                MoviesConcessionsModel concessions = new MoviesConcessionsModel();
+                // Obtiene valores que no tienen posicion
+                concessions.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
+                concessions.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
+                concessions.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                concessionList.Add(concessions);
 
+                // Si tengo valores <i> dentro de los td (en este caso siempre vendra como texto unicamente)
+                if (tdNode != null)
+                {
+                    if (tdNode.Descendants("i").Any())
+                    {
+                        // guardar texto vacio
+                        MoviesConcessionsModel concessionI = new MoviesConcessionsModel();
+                        concessionI.Title = table.SelectSingleNode($"tr[{i}]/td/i")?.InnerText ?? string.Empty;
+                        concessionList.Add(concessionI);
+                    }
+
+                    foreach (HtmlNode childNode in tdNode.ChildNodes)
+                    {
+                        if (childNode.Name == "#text" || childNode.Name == "img")
+                        {
+                            MoviesConcessionsModel concessionContent = new MoviesConcessionsModel();
+                            concessionContent.Title = childNode.InnerText ?? string.Empty;
+                            concessionContent.Image = childNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                            concessionList.Add(concessionContent);
+                        }
+                        else
+                        {
+
+                        }
                     }
                 }
             }
@@ -429,7 +441,7 @@ List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument
 
     //GET Portraits Images
     List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
-{
+{                                                  
     List<string> portraitImagesList = new List<string>();
     HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/ul[7]/li");
 
