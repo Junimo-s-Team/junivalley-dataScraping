@@ -12,6 +12,8 @@
 
         public string Address { get; set; } = string.Empty;
 
+        public bool HasFamily { get; set; }
+
         public List<FamilyModel> Family = new List<FamilyModel>();
 
         public string LivesIn { get; set; } = string.Empty;
