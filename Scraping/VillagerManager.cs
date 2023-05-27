@@ -19,11 +19,13 @@ namespace Scraping
             {
                 Id = villagerId,
                 Name = villager.Name,
-                Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Replace("&#8220;", ""),
+                Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText,
                 Birthday = $"{birthdayStation.Trim()} {birthdayNumber.Trim()}",
                 Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText,
+                HasFamily = villager.HasFamily,
                 Family = villager.HasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
                 LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText,
+                HasClinicVisit = villager.HasClinicVisit,
                 Marriage = villager.HasFamily
                            ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText
                            : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
@@ -50,10 +52,11 @@ namespace Scraping
         {
             string json = JsonConvert.SerializeObject(villagerData);
             string fileName = $"{villagerData.Name}.json";
-            string fullFileName = Path.Combine(@"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/EN", fileName);
-            if (!Directory.Exists(Path.GetDirectoryName(fullFileName)))
+            string path = @"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/EN";
+            string fullFileName = Path.Combine(path, fileName);
+            if (!Directory.Exists(path))
             {
-                Directory.CreateDirectory(fullFileName);
+                Directory.CreateDirectory(path);
             }
             File.WriteAllText(fullFileName, json);
         }
@@ -77,13 +80,13 @@ namespace Scraping
                 if (hasFamily)
                 {
                     //tr value 9
-                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]").InnerText.Replace("&#160;", "");
+                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]").InnerText;
                 }
                 //not family
                 else
                 {
                     //tr value 8
-                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Replace("&#160;", "");
+                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText;
                 };
             }
             //not clinic visit
@@ -198,7 +201,7 @@ namespace Scraping
                 {
                     FamilyModel person = new FamilyModel
                     {
-                        Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", "") ?? string.Empty,
+                        Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
                         Name = pNode.SelectSingleNode("a")?.InnerText ?? string.Empty,
                         Description = pNode.InnerText.Substring(pNode.InnerText.IndexOf("(") + 1).Replace("(", string.Empty).Replace(")", string.Empty) ?? string.Empty
                     };
@@ -239,8 +242,8 @@ namespace Scraping
 
                     BestGiftsModel item = new BestGiftsModel
                     {
-                        Name = childNodes[i].SelectSingleNode(nameXPath)?.InnerText ?? "",
-                        Image = childNodes[i].SelectSingleNode(imageXPath)?.GetAttributeValue("src", "") ?? ""
+                        Name = childNodes[i].SelectSingleNode(nameXPath)?.InnerText ?? string.Empty,
+                        Image = childNodes[i].SelectSingleNode(imageXPath)?.GetAttributeValue("src", string.Empty) ?? string.Empty
                     };
                     bestGifts.Add(item);
                 }
@@ -268,7 +271,7 @@ namespace Scraping
                         ItemsClass item = new ItemsClass
                         {
                             Id = i - 1,
-                            Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", "") ?? string.Empty,
+                            Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
                             Name = tdNodes[1].InnerText ?? string.Empty,
                             Description = tdNodes[2].InnerText ?? string.Empty,
                             Source = tdNodes[3].InnerText ?? string.Empty
