@@ -8,12 +8,10 @@ using Scraping;
 string url = "https://stardewvalleywiki.com";
 
 VillagerManager villagerManager = new VillagerManager();
-
+List<VillagerModel> villagersFailure = new List<VillagerModel>();
 int villagerId = 0;
 
-try
-{
-    List<VillagerModel> villagers = new List<VillagerModel>
+List<VillagerModel> villagers = new List<VillagerModel>
     {
     //marriage candidates
     //Boys
@@ -56,9 +54,10 @@ try
     new VillagerModel{ Name = "Wizard", HasFamily = false, HasClinicVisit = false },
     };
 
-
-    //Call VillagerManager
-    foreach (var villager in villagers)
+//Call VillagerManager
+foreach (var villager in villagers)
+{
+    try
     {
         villagerId++;
         VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{url}/{villager.Name}",
@@ -66,9 +65,10 @@ try
                                                                             villagerId);
         villagerManager.ConvertToJson(villagerData);
     }
-}
-catch
-{
-    Console.WriteLine("Something has gone wrong");
-    return;
+    catch (Exception ex)
+    {
+        villagersFailure.Add(villager);
+        Console.WriteLine($"Something has gone wrong {ex}");
+        Console.WriteLine(villagersFailure);
+    }
 }
