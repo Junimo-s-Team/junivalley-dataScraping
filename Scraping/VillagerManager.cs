@@ -323,68 +323,68 @@ namespace Scraping
 
 
         //GET Movies
-List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
-{
-    List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
-    HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
-
-    var thType = "";
-
-    if (movieNodes != null)
-    {
-        foreach (HtmlNode table in movieNodes)
+        List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
         {
-            HtmlNodeCollection rows = table.SelectNodes("tr");
-            for (int i = 1; i <= rows.Count; i++)
+            List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
+            HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
+
+            var thType = "";
+
+            if (movieNodes != null)
             {
-                MoviesConcessionsModel movies = new MoviesConcessionsModel();
-
-                // Obtiene valores fuera de <p>
-                HtmlNode thNode = table.SelectSingleNode($"tr[{i}]/th");
-                if (thNode != null)
+                foreach (HtmlNode table in movieNodes)
                 {
-                    thType = thNode.InnerText.Trim();
-                }
-
-                var tdNode = table.SelectSingleNode($"tr[{i}]/td");
-                if (tdNode != null)
-                {
-                    // Obtiene valores de <td> sin <p>
-                    HtmlNode tdTextNode = tdNode.SelectSingleNode("./text()");
-                    if (tdTextNode != null)
+                    HtmlNodeCollection rows = table.SelectNodes("tr");
+                    for (int i = 1; i <= rows.Count; i++)
                     {
-                        movies.Type = thType;
-                        movies.Title = tdTextNode.InnerText.Trim();
-                        movies.Image = tdNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                        movieList.Add(movies);
-                    }
+                        MoviesConcessionsModel movies = new MoviesConcessionsModel();
 
-                    // Obtiene valores de <p> dentro de <td>
-                    HtmlNodeCollection pNodes = tdNode.SelectNodes("p");
-                    if (pNodes != null)
-                    {
-                        foreach (HtmlNode pNode in pNodes)
+                        // Obtiene valores fuera de <p>
+                        HtmlNode thNode = table.SelectSingleNode($"tr[{i}]/th");
+                        if (thNode != null)
                         {
-                            MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
-                            moviesWithPValue.Type = thType;
-                            moviesWithPValue.Title = pNode.SelectSingleNode("text()")?.InnerText.Trim() ?? string.Empty;
-                            moviesWithPValue.Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                            movieList.Add(moviesWithPValue);
+                            thType = thNode.InnerText.Trim();
+                        }
+
+                        var tdNode = table.SelectSingleNode($"tr[{i}]/td");
+                        if (tdNode != null)
+                        {
+                            // Obtiene valores de <td> sin <p>
+                            HtmlNode tdTextNode = tdNode.SelectSingleNode("./text()");
+                            if (tdTextNode != null)
+                            {
+                                movies.Type = thType;
+                                movies.Title = tdTextNode.InnerText.Trim();
+                                movies.Image = tdNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                                movieList.Add(movies);
+                            }
+
+                            // Obtiene valores de <p> dentro de <td>
+                            HtmlNodeCollection pNodes = tdNode.SelectNodes("p");
+                            if (pNodes != null)
+                            {
+                                foreach (HtmlNode pNode in pNodes)
+                                {
+                                    MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
+                                    moviesWithPValue.Type = thType;
+                                    moviesWithPValue.Title = pNode.SelectSingleNode("text()")?.InnerText.Trim() ?? string.Empty;
+                                    moviesWithPValue.Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                                    movieList.Add(moviesWithPValue);
+                                }
+                            }
                         }
                     }
                 }
             }
+            return movieList;
         }
-    }
-    return movieList;
-}
 
 
 
         //GET Concessions
         List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument, int idTable)
         {
-            List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>(); ///html/body/div[3]/div[3]/div[5]/div/table[22]/tbody/tr/td[3]/table/tbody //alex
+            List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>();
             HtmlNodeCollection concessionNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[3]/table/tbody");
 
             if (concessionNodes != null)
@@ -392,46 +392,59 @@ List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int
                 foreach (HtmlNode table in concessionNodes)
                 {
                     HtmlNodeCollection rows = table.SelectNodes("tr");
+
+                    string thType = string.Empty; // Variable para almacenar el valor de Type
+
                     for (int i = 1; i <= rows.Count; i++)
                     {
-                        var tdNode = table.SelectSingleNode($"tr[{i}]/td");
-
                         MoviesConcessionsModel concessions = new MoviesConcessionsModel();
-                        // Obtiene valores que no tienen posicion
-                        concessions.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
-                        concessions.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
-                        concessions.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                        concessionList.Add(concessions);
 
-                        // Si tengo valores <i> dentro de los td (en este caso siempre vendra como texto unicamente)
+                        HtmlNode thNode = table.SelectSingleNode($"tr[{i}]/th");
+                        if (thNode != null)
+                        {
+                            thType = thNode.InnerText.Trim();
+                        }
+
+                        HtmlNode tdNode = table.SelectSingleNode($"tr[{i}]/td");
+
                         if (tdNode != null)
                         {
                             if (tdNode.Descendants("i").Any())
                             {
-                                // guardar texto vacio
                                 MoviesConcessionsModel concessionI = new MoviesConcessionsModel();
-                                concessionI.Title = table.SelectSingleNode($"tr[{i}]/td/i")?.InnerText ?? string.Empty;
+                                concessionI.Type = thType;
+                                concessionI.Title = tdNode.SelectSingleNode("i")?.InnerText ?? string.Empty;
+                                concessionI.Image = tdNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
                                 concessionList.Add(concessionI);
                             }
-
-                            foreach (HtmlNode childNode in tdNode.ChildNodes)
+                            else
                             {
-                                if (childNode.Name == "#text" || childNode.Name == "img")
-                                {
-                                    MoviesConcessionsModel concessionContent = new MoviesConcessionsModel();
-                                    concessionContent.Title = childNode.InnerText ?? string.Empty;
-                                    concessionContent.Image = childNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                                    concessionList.Add(concessionContent);
-                                }
-                                else
-                                {
+                                // Obtiene valores que no tienen posición
+                                MoviesConcessionsModel concessionContent = new MoviesConcessionsModel();
+                                concessionContent.Type = thType;
 
+                                HtmlNodeCollection textNodes = tdNode.SelectNodes("text()");
+                                if (textNodes != null)
+                                {
+                                    foreach (HtmlNode textNode in textNodes)
+                                    {
+                                        string text = textNode.InnerText.Trim();
+                                        if (!string.IsNullOrEmpty(text))
+                                        {
+                                            MoviesConcessionsModel concession = new MoviesConcessionsModel();
+                                            concession.Type = thType;
+                                            concession.Title = text;
+                                            concession.Image = tdNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                                            concessionList.Add(concession);
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
             return concessionList;
         }
 
