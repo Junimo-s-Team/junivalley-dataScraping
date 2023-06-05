@@ -12,23 +12,23 @@ namespace Scraping
         internal VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
         {
             HtmlDocument htmlDocument = GetDocument(url);
-            string birthdayStation = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]/span/a").InnerText;
-            string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
+            string birthdayStation = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]/span/a").InnerText.Trim();
+            string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText.Trim();
 
             VillagerModel newVillager = new VillagerModel
             {
                 Id = villagerId,
-                Name = villager.Name,
-                Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText,
+                Name = villager.Name.Trim(),
+                Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Trim(),
                 Birthday = $"{birthdayStation.Trim()} {birthdayNumber.Trim()}",
-                Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText,
+                Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim(),
                 HasFamily = villager.HasFamily,
                 Family = villager.HasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
-                LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText,
+                LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText.Trim(),
                 HasClinicVisit = villager.HasClinicVisit,
                 Marriage = villager.HasFamily
-                           ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText
-                           : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText,
+                           ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Trim()
+                           : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText.Trim(),
                 BestGifts = GetBestGiftsForVillager(htmlDocument, villager.HasFamily, villager.HasClinicVisit),
                 //TimeLocationSpring = GetTimeLocation(htmlDocument, idTableSeason: 2),
                 LovedGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 13 : 12),
@@ -80,13 +80,13 @@ namespace Scraping
                 if (hasFamily)
                 {
                     //tr value 9
-                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]").InnerText;
+                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[9]/td[2]").InnerText.Trim();
                 }
                 //not family
                 else
                 {
                     //tr value 8
-                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText;
+                    return htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Trim();
                 };
             }
             //not clinic visit
@@ -323,61 +323,62 @@ namespace Scraping
 
 
         //GET Movies
-        List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
+List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
+{
+    List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
+    HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
+
+    var thType = "";
+
+    if (movieNodes != null)
+    {
+        foreach (HtmlNode table in movieNodes)
         {
-            List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
-            HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
-
-            if (movieNodes != null)
+            HtmlNodeCollection rows = table.SelectNodes("tr");
+            for (int i = 1; i <= rows.Count; i++)
             {
-                foreach (HtmlNode table in movieNodes)
+                MoviesConcessionsModel movies = new MoviesConcessionsModel();
+
+                // Obtiene valores fuera de <p>
+                HtmlNode thNode = table.SelectSingleNode($"tr[{i}]/th");
+                if (thNode != null)
                 {
-                    HtmlNodeCollection rows = table.SelectNodes("tr");
-                    for (int i = 1; i <= rows.Count; i++)
+                    thType = thNode.InnerText.Trim();
+                }
+
+                var tdNode = table.SelectSingleNode($"tr[{i}]/td");
+                if (tdNode != null)
+                {
+                    // Obtiene valores de <td> sin <p>
+                    HtmlNode tdTextNode = tdNode.SelectSingleNode("./text()");
+                    if (tdTextNode != null)
                     {
-                        MoviesConcessionsModel movies = new MoviesConcessionsModel();
-
-                        // Obtiene valores fuera de <p>
-                        movies.Type = table.SelectSingleNode($"tr[{i}]/th")?.InnerText ?? string.Empty;
-                        movies.Title = table.SelectSingleNode($"tr[{i}]/td/text()")?.InnerText ?? string.Empty;
-                        movies.Image = table.SelectSingleNode($"tr[{i}]/td/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                        movies.Type = thType;
+                        movies.Title = tdTextNode.InnerText.Trim();
+                        movies.Image = tdNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
                         movieList.Add(movies);
+                    }
 
-                        // Si tengo valores <p> dentro de los td
-                        var tdNode = table.SelectSingleNode($"tr[{i}]/td");
-                        if (tdNode != null && tdNode.Descendants("p").Any())
+                    // Obtiene valores de <p> dentro de <td>
+                    HtmlNodeCollection pNodes = tdNode.SelectNodes("p");
+                    if (pNodes != null)
+                    {
+                        foreach (HtmlNode pNode in pNodes)
                         {
-                            int pIndex = 1; // Índice del elemento <p>
-                            foreach (HtmlNode pNode in tdNode.Descendants("p"))
-                            {
-                                //Comprobar si <p> contiene [valor]
-                                string pValue = pNode.GetAttributeValue("value", string.Empty);
-                                if (!string.IsNullOrEmpty(pValue))
-                                {
-                                    // Utiliza pIndex para el valor de <p>
-                                    MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
-                                    moviesWithPValue.Type = movies.Type;
-                                    moviesWithPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
-                                    moviesWithPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                                    movieList.Add(moviesWithPValue);
-                                }
-                                else
-                                {
-                                    // Si no tiene el atributo 'value', entonces es <p>
-                                    MoviesConcessionsModel moviesWithoutPValue = new MoviesConcessionsModel();
-                                    moviesWithoutPValue.Type = movies.Type;
-                                    moviesWithoutPValue.Title = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/text()")?.InnerText ?? string.Empty;
-                                    moviesWithoutPValue.Image = table.SelectSingleNode($"tr[{i}]/td/p[{pIndex}]/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                                    movieList.Add(moviesWithoutPValue);
-                                    pIndex++; // Incrementa el índice del elemento <p> para el siguiente bucle
-                                }
-                            }
+                            MoviesConcessionsModel moviesWithPValue = new MoviesConcessionsModel();
+                            moviesWithPValue.Type = thType;
+                            moviesWithPValue.Title = pNode.SelectSingleNode("text()")?.InnerText.Trim() ?? string.Empty;
+                            moviesWithPValue.Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                            movieList.Add(moviesWithPValue);
                         }
                     }
                 }
             }
-            return movieList;
         }
+    }
+    return movieList;
+}
+
 
 
         //GET Concessions
