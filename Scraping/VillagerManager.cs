@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Xml;
+using System.Net;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Scraping.Models;
@@ -12,15 +13,14 @@ namespace Scraping
         internal VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
         {
             HtmlDocument htmlDocument = GetDocument(url);
-            string birthdayStation = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]/span/a").InnerText.Trim();
             string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText.Trim();
 
             VillagerModel newVillager = new VillagerModel
             {
                 Id = villagerId,
                 Name = villager.Name.Trim(),
-                Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Trim(),
-                Birthday = $"{birthdayStation.Trim()} {birthdayNumber.Trim()}",
+                Description = WebUtility.HtmlDecode(htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Trim()),
+                Birthday = WebUtility.HtmlDecode(birthdayNumber.Trim()),
                 Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim(),
                 HasFamily = villager.HasFamily,
                 Family = villager.HasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
@@ -30,7 +30,7 @@ namespace Scraping
                            ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Trim()
                            : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText.Trim(),
                 BestGifts = GetBestGiftsForVillager(htmlDocument, villager.HasFamily, villager.HasClinicVisit),
-                //TimeLocationSpring = GetTimeLocation(htmlDocument, idTableSeason: 2),
+                //TimeLocation = GetTimeLocation(htmlDocument, idTableSeason: 2),
                 LovedGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 13 : 12),
                 LikedGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 15 : 14),
                 NeutralGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 17 : 16),
@@ -38,7 +38,7 @@ namespace Scraping
                 HateGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 21 : 20),
                 Movies = GetMoviesForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
                 Concessions = GetConcessionsForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
-                ClinicVisit = GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument)
+                ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument))
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 //Portraits = GetPortraitsForVillager(htmlDocument)
 
@@ -202,7 +202,7 @@ namespace Scraping
                     FamilyModel person = new FamilyModel
                     {
                         Image = pNode.SelectSingleNode("img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
-                        Name = pNode.SelectSingleNode("a")?.InnerText ?? string.Empty,
+                        Name = pNode.SelectSingleNode("a")?.InnerText.Trim() ?? string.Empty,
                         Description = pNode.InnerText.Substring(pNode.InnerText.IndexOf("(") + 1).Replace("(", string.Empty).Replace(")", string.Empty) ?? string.Empty
                     };
                     familyList.Add(person);
@@ -242,7 +242,7 @@ namespace Scraping
 
                     BestGiftsModel item = new BestGiftsModel
                     {
-                        Name = childNodes[i].SelectSingleNode(nameXPath)?.InnerText ?? string.Empty,
+                        Name = childNodes[i].SelectSingleNode(nameXPath)?.InnerText.Trim() ?? string.Empty,
                         Image = childNodes[i].SelectSingleNode(imageXPath)?.GetAttributeValue("src", string.Empty) ?? string.Empty
                     };
                     bestGifts.Add(item);
@@ -272,9 +272,9 @@ namespace Scraping
                         {
                             Id = i - 1,
                             Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
-                            Name = tdNodes[1].InnerText ?? string.Empty,
-                            Description = tdNodes[2].InnerText ?? string.Empty,
-                            Source = tdNodes[3].InnerText ?? string.Empty
+                            Name = tdNodes[1].InnerText.Trim() ?? string.Empty,
+                            Description = tdNodes[2].InnerText.Trim() ?? string.Empty,
+                            Source = tdNodes[3].InnerText.Trim() ?? string.Empty
                         };
 
                         if (tdNodes.Count >= 5 && tdNodes[4].ChildNodes.Any())
@@ -312,7 +312,7 @@ namespace Scraping
                     IngredientsModel ingredientsModel = new IngredientsModel
                     {
                         Image = node.SelectSingleNode($"{node.XPath}/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
-                        Name = node.SelectSingleNode($"{node.XPath}/a")?.InnerText ?? string.Empty,
+                        Name = node.SelectSingleNode($"{node.XPath}/a")?.InnerText.Trim() ?? string.Empty,
                         Quantity = node?.InnerText.Substring(node.InnerText.Length - 3).Replace("(", string.Empty).Replace(")", string.Empty) ?? string.Empty
                     };
                     ingredientList.Add(ingredientsModel);

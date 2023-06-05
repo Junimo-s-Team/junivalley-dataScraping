@@ -22,7 +22,7 @@
 
         public string ClinicVisit { get; set; } = string.Empty;
 
-        public List<TimeLocationModel> TimeLocationSpring { get; set; } = new List<TimeLocationModel>();
+        public List<TimeLocationModel> TimeLocation { get; set; } = new List<TimeLocationModel>();
 
         public List<BestGiftsModel> BestGifts { get; set; } = new List<BestGiftsModel>();
 
