@@ -38,9 +38,9 @@ namespace Scraping
                 HateGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 21 : 20),
                 Movies = GetMoviesForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
                 Concessions = GetConcessionsForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
-                ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument))
+                ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument)),
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
-                //Portraits = GetPortraitsForVillager(htmlDocument)
+                Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
 
             };
            
@@ -450,20 +450,53 @@ namespace Scraping
 
 
         //GET Portraits Images
-        List<string> GetPortraitsForVillager(HtmlDocument htmlDocument)
+        List<string> GetPortraitsForVillager(HtmlDocument htmlDocument, int startUlIndex, int endUlIndex)
         {
             List<string> portraitImagesList = new List<string>();
-            HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/ul[7]/li");
 
-            foreach (HtmlNode liNode in liNodes)
+            // Agregar el valor de ulIndex 7 si está dentro del rango
+            if (startUlIndex <= 7 && 7 <= endUlIndex)
             {
-                foreach (HtmlNode div in liNode.Descendants("div"))
+                string ul7XPath = "/html/body/div[3]/div[3]/div[5]/div/ul[7]/li";
+                HtmlNodeCollection ul7LiNodes = htmlDocument.DocumentNode.SelectNodes(ul7XPath);
+
+                if (ul7LiNodes != null)
                 {
-                    var imgNode = div.SelectSingleNode("./div[1]/div/a/img");
-                    if (imgNode != null)
+                    foreach (HtmlNode liNode in ul7LiNodes)
                     {
-                        var images = imgNode.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                        portraitImagesList.Add(images);
+                        foreach (HtmlNode div in liNode.Descendants("div"))
+                        {
+                            var imgNode = div.SelectSingleNode("./div[1]/div/a/img");
+                            if (imgNode != null)
+                            {
+                                var imageSrc = imgNode.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                                portraitImagesList.Add(imageSrc);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int ulIndex = startUlIndex; ulIndex <= endUlIndex; ulIndex++)
+            {
+                if (ulIndex == 7) continue; // Saltar el valor de ulIndex 7 si ya se procesó anteriormente
+
+                string ulXPath = $"/html/body/div[3]/div[3]/div[5]/div/ul[{ulIndex}]/li";
+                HtmlNodeCollection liNodes = htmlDocument.DocumentNode.SelectNodes(ulXPath);
+
+                if (liNodes != null)
+                {
+                    foreach (HtmlNode liNode in liNodes)
+                    {
+                        foreach (HtmlNode div in liNode.Descendants("div"))
+                        {
+                            var imgNode = div.SelectSingleNode("./div[1]/div/a/img");
+                            if (imgNode != null)
+                            {
+                                var imageSrc = imgNode.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                                portraitImagesList.Add(imageSrc);
+                            }
+                        }
                     }
                 }
             }
