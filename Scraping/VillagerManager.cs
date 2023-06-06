@@ -14,14 +14,14 @@ namespace Scraping
         internal VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
         {
             HtmlDocument htmlDocument = GetDocument(url);
-            string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText.Trim();
+            string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
 
             VillagerModel newVillager = new VillagerModel
             {
                 Id = villagerId,
                 Name = villager.Name.Trim(),
-                Description = WebUtility.HtmlDecode(htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Trim()),
-                Birthday = WebUtility.HtmlDecode(birthdayNumber.Trim()),
+                Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Replace("&#8220;", string.Empty).Replace("&#8221;", string.Empty).Trim(),
+                Birthday = WebUtility.HtmlDecode(birthdayNumber).Trim(),
                 Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim(),
                 HasFamily = villager.HasFamily,
                 Family = villager.HasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
@@ -39,7 +39,7 @@ namespace Scraping
                 HateGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 21 : 20),
                 Movies = GetMoviesForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
                 Concessions = GetConcessionsForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
-                ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument)),
+                ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument)).Trim(),
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
 
