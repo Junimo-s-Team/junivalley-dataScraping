@@ -5,13 +5,14 @@ using System;
 using System.IO;
 using Scraping;
 
-string url = "https://stardewvalleywiki.com";
+string baseUrl = "https://stardewvalleywiki.com";
+List<string> languages = new List<string> { "EN", "ES", "FR", "PT", "DE", "JA" };
 
 VillagerManager villagerManager = new VillagerManager();
-List<VillagerModel> villagersFailure = new List<VillagerModel>();
+List<KeyValuePair<string, Dictionary<string, (string name, bool hasFamily, bool hasClinicVisit)>>> villagersFailure = new List<KeyValuePair<string, Dictionary<string, (string name, bool hasFamily, bool hasClinicVisit)>>>();
 int villagerId = 0;
 
-List<VillagerModel> villagers = new List<VillagerModel>
+/*List<VillagerModel> villagers = new List<VillagerModel>
     {
     //marriage candidates
     //Boys
@@ -52,7 +53,65 @@ List<VillagerModel> villagers = new List<VillagerModel>
     new VillagerModel{ Name = "Vicent", HasFamily = true, HasClinicVisit = true }, // worse birthday?
     new VillagerModel{ Name = "Willy", HasFamily = false, HasClinicVisit = true },
     new VillagerModel{ Name = "Wizard", HasFamily = false, HasClinicVisit = false },
-    };
+
+    //non-giftable candidates
+    //Change names depends on language
+    new VillagerModel{ Name = "Birdie", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Bouncer", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Gil", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Governor", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Grandpa", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Gunther", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Henchman", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Marlon", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Mr. Qi", HasFamily = false, HasClinicVisit = false },
+    new VillagerModel{ Name = "Professor Snail", HasFamily = false, HasClinicVisit = false }
+    }; */
+
+Dictionary<string, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>> villagers = new Dictionary<string, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>>
+{
+    { "Alex", new Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>
+        {
+            { "EN", ("Alex", true, true) },
+            { "ES", ("Alex", true, true) },
+            { "FR", ("Alex", true, true) },
+            { "PT", ("Alex", true, true) },
+            { "DE", ("Alex", true, true) },
+            { "JA", ("アレックス", true, true) }
+        }
+    },
+    { "Elliott", new Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>
+        {
+            { "EN", ("Elliott", false, true) },
+            { "ES", ("Elliott", false, true) },
+            { "FR", ("Elliott", false, true) },
+            { "PT", ("Elliott", false, true) },
+            { "DE", ("Elliott", false, true) },
+            { "JA", ("エリオット", false, true) },
+        }
+    },
+    { "Harvey", new Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>
+        {
+            { "EN", ("Harvey", false, false) },
+            { "ES", ("Harvey", false, false) },
+            { "FR", ("Harvey", false, false) },
+            { "PT", ("Harvey", false, false) },
+            { "DE", ("Harvey", false, false) },
+            { "JA", ("ハーヴィー", false, false) },
+        }
+    },
+    { "Sam", new Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>
+        {
+            { "EN", ("Sam", true, true) },
+            { "ES", ("Sam", true, true) },
+            { "FR", ("Sam", true, true) },
+            { "PT", ("Sam", true, true) },
+            { "DE", ("Sam", true, true) },
+            { "JA", ("サム", true, true) },
+        }
+    },
+};
+
 
 //Call VillagerManager
 foreach (var villager in villagers)
@@ -60,10 +119,21 @@ foreach (var villager in villagers)
     try
     {
         villagerId++;
-        VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{url}/{villager.Name}",
-                                                                            villager,
-                                                                            villagerId);
-        villagerManager.ConvertToJson(villagerData);
+
+        foreach (var language in languages)
+        {
+            string languageUrl = language == "EN" ? baseUrl : $"https://{language.ToLower()}.stardewvalleywiki.com";
+            string villagerName = villager.Value.ContainsKey(language) ? villager.Value[language].Name : villager.Key;
+            bool hasFamily = villager.Value.ContainsKey(language) ? villager.Value[language].HasFamily : false;
+            bool hasClinicVisit = villager.Value.ContainsKey(language) ? villager.Value[language].HasClinicVisit : false;
+
+            VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{languageUrl}/{villagerName}",
+                                                                                villager.Value,
+                                                                                language,
+                                                                                villagerId);
+
+            villagerManager.ConvertToJson(villagerData, language);
+        }
     }
     catch (Exception ex)
     {

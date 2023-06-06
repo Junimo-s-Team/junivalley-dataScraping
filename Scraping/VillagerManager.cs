@@ -11,10 +11,12 @@ namespace Scraping
 	public class VillagerManager
 	{
         //Villager Detail
-        internal VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
+        internal VillagerModel GetVillagerPrimaryData(string url, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)> villagerDictionary, string language, int villagerId)
         {
             HtmlDocument htmlDocument = GetDocument(url);
             string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
+
+            var villager = villagerDictionary[language];
 
             VillagerModel newVillager = new VillagerModel
             {
@@ -42,14 +44,13 @@ namespace Scraping
                 ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument)).Trim(),
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
-
             };
-           
+
             return newVillager;
         }
 
         //Save villager data in json
-        internal void ConvertToJson(VillagerModel villagerData)
+        internal void ConvertToJson(VillagerModel villagerData, string language)
         {
             //lowercase
             var serializerSettings = new JsonSerializerSettings();
@@ -57,7 +58,8 @@ namespace Scraping
             //create json
             string json = JsonConvert.SerializeObject(villagerData, serializerSettings);
             string fileName = $"{villagerData.Name}.json";
-            string path = @"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/EN";
+            string folderName = language;
+            string path = $@"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/{folderName}";
             string fullFileName = Path.Combine(path, fileName);
             if (!Directory.Exists(path))
             {
@@ -275,7 +277,7 @@ namespace Scraping
                     {
                         ItemsClass item = new ItemsClass
                         {
-                            Id = i - 1,
+                            Id = giftList.Count,
                             Image = tdNodes[0].SelectSingleNode("div/div/a/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
                             Name = tdNodes[1].InnerText.Trim() ?? string.Empty,
                             Description = tdNodes[2].InnerText.Trim() ?? string.Empty,
