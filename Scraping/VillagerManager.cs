@@ -4,6 +4,7 @@ using System.Net;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Scraping.Models;
+using Newtonsoft.Json.Serialization;
 
 namespace Scraping
 {
@@ -50,7 +51,11 @@ namespace Scraping
         //Save villager data in json
         internal void ConvertToJson(VillagerModel villagerData)
         {
-            string json = JsonConvert.SerializeObject(villagerData);
+            //lowercase
+            var serializerSettings = new JsonSerializerSettings();
+            serializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            //create json
+            string json = JsonConvert.SerializeObject(villagerData, serializerSettings);
             string fileName = $"{villagerData.Name}.json";
             string path = @"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/EN";
             string fullFileName = Path.Combine(path, fileName);
