@@ -56,7 +56,7 @@ namespace Scraping
             var serializerSettings = new JsonSerializerSettings();
             serializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             //create json
-            string json = JsonConvert.SerializeObject(villagerData, serializerSettings);
+            string json = JsonConvert.SerializeObject(villagerData, Newtonsoft.Json.Formatting.Indented, serializerSettings);
             string fileName = $"{villagerData.Name}.json";
             string folderName = language;
             string path = $@"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/{folderName}";
