@@ -22,6 +22,8 @@
 
         public string ClinicVisit { get; set; } = string.Empty;
 
+        public string TimeLine { get; set; } = string.Empty;
+
         public List<TimeLocationModel> TimeLocation { get; set; } = new List<TimeLocationModel>();
 
         public List<BestGiftsModel> BestGifts { get; set; } = new List<BestGiftsModel>();

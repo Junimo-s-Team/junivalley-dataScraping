@@ -42,6 +42,7 @@ namespace Scraping
                 Movies = GetMoviesForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
                 Concessions = GetConcessionsForVillager(htmlDocument, idTable: villager.HasFamily ? 22 : 21),
                 ClinicVisit = WebUtility.HtmlDecode(GetClinicVisitFamily(villager.HasFamily, villager.HasClinicVisit, htmlDocument)).Trim(),
+                TimeLine = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[3]/div/a/img").GetAttributeValue("src", string.Empty) ?? string.Empty,
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
             };
