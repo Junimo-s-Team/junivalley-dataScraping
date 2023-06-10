@@ -10,9 +10,10 @@ List<string> languages = new List<string> { "EN", "ES", "FR", "PT", "DE", "JA" }
 
 VillagerManager villagerManager = new VillagerManager();
 VillagerLanguageNames villagerNames = new VillagerLanguageNames();
-Dictionary<string, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>> villagers = villagerNames.Villagers;
 
+Dictionary<string, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)>> villagers = villagerNames.Villagers;
 List<KeyValuePair<string, Dictionary<string, (string name, bool hasFamily, bool hasClinicVisit)>>> villagersFailure = new List<KeyValuePair<string, Dictionary<string, (string name, bool hasFamily, bool hasClinicVisit)>>>();
+
 int villagerId = 0;
 
 //Call VillagerManager
@@ -29,7 +30,8 @@ foreach (var villager in villagers)
             bool hasFamily = villager.Value.ContainsKey(language) ? villager.Value[language].HasFamily : false;
             bool hasClinicVisit = villager.Value.ContainsKey(language) ? villager.Value[language].HasClinicVisit : false;
 
-            VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{languageUrl}/{villagerName}",
+            VillagerModel villagerData = villagerManager.GetVillagerPrimaryData(languageUrl,
+                                                                                $"{languageUrl}/{villagerName}",
                                                                                 villager.Value,
                                                                                 language,
                                                                                 villagerId);

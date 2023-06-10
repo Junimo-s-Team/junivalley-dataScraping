@@ -11,10 +11,11 @@ namespace Scraping
 	public class VillagerManager
 	{
         //Villager Detail
-        internal VillagerModel GetVillagerPrimaryData(string url, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)> villagerDictionary, string language, int villagerId)
+        internal VillagerModel GetVillagerPrimaryData(string baseUrl, string nameUrl, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)> villagerDictionary, string language, int villagerId)
         {
-            HtmlDocument htmlDocument = GetDocument(url);
+            HtmlDocument htmlDocument = GetDocument(nameUrl);
             string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
+            string addressValue = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim();
 
             var villager = villagerDictionary[language];
 
@@ -24,7 +25,7 @@ namespace Scraping
                 Name = villager.Name.Trim(),
                 Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Replace("&#8220;", string.Empty).Replace("&#8221;", string.Empty).Trim(),
                 Birthday = WebUtility.HtmlDecode(birthdayNumber).Trim(),
-                Address = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim(),
+                Address = addressValue,
                 HasFamily = villager.HasFamily,
                 Family = villager.HasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
                 LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText.Trim(),
@@ -46,6 +47,10 @@ namespace Scraping
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
             };
+            //address detail
+            HtmlDocument htmlDocumentAddressDetail = GetDocument($"{baseUrl}/{addressValue}");
+            newVillager.OutsideHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[2]/td/div/div/a/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
+            newVillager.MapHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[3]/td/div/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
 
             return newVillager;
         }

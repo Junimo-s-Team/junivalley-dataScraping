@@ -12,6 +12,10 @@
 
         public string Address { get; set; } = string.Empty;
 
+        public string OutsideHouseImage { get; set; } = string.Empty;
+
+        public string MapHouseImage { get; set; } = string.Empty;
+
         public bool HasFamily { get; set; }
 
         public List<FamilyModel> Family = new List<FamilyModel>();
