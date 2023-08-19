@@ -20,10 +20,10 @@ namespace Scraping.Managers
         }
 
         //Save villager data in json
-        public void ConvertToJson(VillagerModel villagerData)
+        public void ConvertToJson(VillagerModel villagerData, string lenguage)
         {
             string fileName = $"{villagerData.Name}.json";
-            string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/Stardew Valley/Scrapping/EN";
+            string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/Stardew Valley/Scrapping/{lenguage}";
             string fullFileName = Path.Combine(path, fileName);
             //lowercase
             var serializerSettings = new JsonSerializerSettings();

@@ -4,22 +4,23 @@ using Scraping.Models;
 
 VillagerManager villagerManager = new VillagerManager();
 List<VillagerModel> villagersFailure = new List<VillagerModel>();
-//VillagerLanguageNames villagerNames = new VillagerLanguageNames();
-int villagerId = 0;
-
 //Call VillagerManager
 foreach (var villager in GeneralConstants.VILLAGERS)
 {
-    try
+    foreach (var lenguage in GeneralConstants.LENGUAGES)
     {
-        villagerId++;
-        VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{GeneralConstants.BASE_URL}/{villager.Name}", villager, villagerId);
-        villagerManager.ConvertToJson(villagerData);
-    }
-    catch (Exception ex)
-    {
-        villagersFailure.Add(villager);
-        Console.WriteLine($"Algo ha ido mal con el aldeano {villager.Name}. Excepción: {ex}");
-        Console.WriteLine(villagersFailure);
+        try
+        {
+            string url = $"https://{lenguage.ToLower()}{GeneralConstants.BASE_URL}/{villager.Name}";
+            VillagerModel villagerData = villagerManager.GetVillagerPrimaryData(url, villager);
+            villagerManager.ConvertToJson(villagerData, lenguage);
+        }
+
+        catch (Exception ex)
+        {
+            villagersFailure.Add(villager);
+            Console.WriteLine($"Algo ha ido mal con el aldeano {villager.Name}, en el idioma {lenguage}. Excepción: {ex}");
+            Console.WriteLine(villagersFailure);
+        }
     }
 }

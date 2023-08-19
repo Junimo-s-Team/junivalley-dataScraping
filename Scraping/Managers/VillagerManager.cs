@@ -8,17 +8,15 @@ namespace Scraping.Managers
     public class VillagerManager : BaseManager
     {
         //Villager Detail
-        public VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
+        public VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager)
         {
             HtmlDocument htmlDocument = GetDocument(url);
             string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
             string addressValue = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim();
-
-            //var villager = villagerDictionary[language];
+            string addressValueUrl = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").Attributes["href"].Value;
 
             VillagerModel newVillager = new VillagerModel
             {
-                Id = villagerId,
                 Name = villager.Name.Trim(),
                 Description = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/table[1]/tbody/tr[1]/td[2]").InnerText.Replace("&#8220;", string.Empty).Replace("&#8221;", string.Empty).Trim(),
                 Birthday = WebUtility.HtmlDecode(birthdayNumber).Trim(),
@@ -27,9 +25,6 @@ namespace Scraping.Managers
                 Family = villager.HasFamily ? GetFamilyPeopleForVillager(htmlDocument) : new List<FamilyModel>(),
                 LivesIn = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[5]/td[2]/a").InnerText.Trim(),
                 HasClinicVisit = villager.HasClinicVisit,
-                Marriage = villager.HasFamily
-                           ? htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[8]/td[2]").InnerText.Trim()
-                           : htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]").InnerText.Trim(),
                 BestGifts = GetBestGiftsForVillager(htmlDocument, villager.HasFamily, villager.HasClinicVisit),
                 //TimeLocation = GetTimeLocation(htmlDocument, idTableSeason: 2),
                 LovedGifts = GetGiftsForVillager(htmlDocument, idTable: villager.HasFamily ? 13 : 12),
@@ -45,7 +40,8 @@ namespace Scraping.Managers
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
             };
 
-            HtmlDocument htmlDocumentAddressDetail = GetDocument($"{GeneralConstants.BASE_URL}/{addressValue}");
+            //Conseguir nombres en español, sustituir espacios por "_"
+            HtmlDocument htmlDocumentAddressDetail = GetDocument($"https://{GeneralConstants.BASE_URL}/{addressValueUrl}");
             newVillager.OutsideHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[2]/td/div/div/a/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
             newVillager.MapHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[3]/td/div/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
 

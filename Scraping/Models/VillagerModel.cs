@@ -4,6 +4,8 @@
     {
         public int Id { get; set; }
 
+        public string Lenguage { get; set; } = string.Empty;
+
         public string Name { get; set; } = string.Empty;
 
         public string Description { get; set; } = string.Empty;
@@ -18,7 +20,7 @@
 
         public bool HasFamily { get; set; }
 
-        public List<FamilyModel> Family = new List<FamilyModel>();
+        public List<FamilyModel> Family { get; set; }  = new List<FamilyModel>();
 
         public string LivesIn { get; set; } = string.Empty;
 
@@ -48,9 +50,8 @@
 
         public List<HeartEventsModel> HeartEvents { get; set; } = new List<HeartEventsModel>();
 
-        public string Marriage { get; set; } = string.Empty;
+        public bool CanBeMarriage { get; set; }
 
         public List<string> Portraits { get; set; } = new List<string>();
-
     }
 }
