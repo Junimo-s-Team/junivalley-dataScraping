@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using Scraping.Common;
 using Scraping.Models;
 using System.Net;
 
@@ -9,11 +10,11 @@ namespace Scraping.Managers
         //Villager Detail
         public VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
         {
-            HtmlDocument htmlDocument = GetDocument(nameUrl);
+            HtmlDocument htmlDocument = GetDocument(url);
             string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
             string addressValue = htmlDocument.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[6]/td[2]/a").InnerText.Trim();
 
-            var villager = villagerDictionary[language];
+            //var villager = villagerDictionary[language];
 
             VillagerModel newVillager = new VillagerModel
             {
@@ -43,6 +44,10 @@ namespace Scraping.Managers
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
             };
+
+            HtmlDocument htmlDocumentAddressDetail = GetDocument($"{GeneralConstants.BASE_URL}/{addressValue}");
+            newVillager.OutsideHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[2]/td/div/div/a/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
+            newVillager.MapHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[3]/td/div/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
 
             return newVillager;
         }

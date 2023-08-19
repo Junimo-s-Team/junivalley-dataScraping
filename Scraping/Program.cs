@@ -3,7 +3,9 @@ using Scraping.Managers;
 using Scraping.Models;
 
 VillagerManager villagerManager = new VillagerManager();
-VillagerLanguageNames villagerNames = new VillagerLanguageNames();
+List<VillagerModel> villagersFailure = new List<VillagerModel>();
+//VillagerLanguageNames villagerNames = new VillagerLanguageNames();
+int villagerId = 0;
 
 //Call VillagerManager
 foreach (var villager in GeneralConstants.VILLAGERS)
@@ -11,7 +13,7 @@ foreach (var villager in GeneralConstants.VILLAGERS)
     try
     {
         villagerId++;
-        VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{GeneralConstants.URL}/{villager.Name}", villager, villagerId);
+        VillagerModel villagerData = villagerManager.GetVillagerPrimaryData($"{GeneralConstants.BASE_URL}/{villager.Name}", villager, villagerId);
         villagerManager.ConvertToJson(villagerData);
     }
     catch (Exception ex)

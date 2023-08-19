@@ -4,7 +4,7 @@ namespace Scraping.Common
 {
     static class GeneralConstants
     {
-        public const string URL = "https://stardewvalleywiki.com";
+        public const string BASE_URL = "https://stardewvalleywiki.com";
 
 
         public static readonly List<VillagerModel> VILLAGERS = new List<VillagerModel>

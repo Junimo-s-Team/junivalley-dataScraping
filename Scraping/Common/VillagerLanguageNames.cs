@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Scraping
+﻿namespace Scraping.Common
 {
     public class VillagerLanguageNames
     {
@@ -134,4 +132,3 @@ namespace Scraping
         }
     }
 }
-
