@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-	internal class IngredientsModel
+	public class IngredientsModel
 	{
 		public string Image { get; set; } = string.Empty;
 

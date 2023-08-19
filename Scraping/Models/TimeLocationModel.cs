@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-	internal class TimeLocationModel
+	public class TimeLocationModel
 	{
 		public string Day = string.Empty;
 

@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-    internal class ItemsClass
+    public class ItemsClass
     {
         public int Id { get; set; }
 
