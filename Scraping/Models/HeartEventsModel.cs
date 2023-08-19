@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-	internal class HeartEventsModel
+	public class HeartEventsModel
 	{
 		public string Title = string.Empty;
 

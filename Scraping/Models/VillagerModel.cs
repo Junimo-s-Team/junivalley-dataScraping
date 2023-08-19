@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-    internal class VillagerModel
+    public class VillagerModel
     {
         public int Id { get; set; }
 

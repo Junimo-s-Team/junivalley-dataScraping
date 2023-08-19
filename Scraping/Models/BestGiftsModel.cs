@@ -1,6 +1,6 @@
 ﻿namespace Scraping.Models
 {
-	internal class BestGiftsModel
+	public class BestGiftsModel
 	{
 		public string Name { get; set; } = string.Empty;
 

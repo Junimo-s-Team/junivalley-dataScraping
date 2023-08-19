@@ -1,17 +1,13 @@
-﻿using System;
-using System.Xml;
-using System.Net;
-using HtmlAgilityPack;
-using Newtonsoft.Json;
+﻿using HtmlAgilityPack;
 using Scraping.Models;
-using Newtonsoft.Json.Serialization;
+using System.Net;
 
-namespace Scraping
+namespace Scraping.Managers
 {
-	public class VillagerManager
-	{
+    public class VillagerManager : BaseManager
+    {
         //Villager Detail
-        internal VillagerModel GetVillagerPrimaryData(string baseUrl, string nameUrl, Dictionary<string, (string Name, bool HasFamily, bool HasClinicVisit)> villagerDictionary, string language, int villagerId)
+        public VillagerModel GetVillagerPrimaryData(string url, VillagerModel villager, int villagerId)
         {
             HtmlDocument htmlDocument = GetDocument(nameUrl);
             string birthdayNumber = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"infoboxdetail\"]").InnerText;
@@ -47,45 +43,12 @@ namespace Scraping
                 //HeartEvents = GetHeartEventsForVillager(htmlDocument),
                 Portraits = GetPortraitsForVillager(htmlDocument, startUlIndex: 1, endUlIndex: 11)
             };
-            //address detail
-            HtmlDocument htmlDocumentAddressDetail = GetDocument($"{baseUrl}/{addressValue}");
-            newVillager.OutsideHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[2]/td/div/div/a/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
-            newVillager.MapHouseImage = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("/html/body/div[3]/div[3]/div[5]/div/div/table/tbody/tr[3]/td/div/img").GetAttributeValue("src", string.Empty) ?? string.Empty;
 
             return newVillager;
         }
 
-        //Save villager data in json
-        internal void ConvertToJson(VillagerModel villagerData, string language)
-        {
-            //lowercase
-            var serializerSettings = new JsonSerializerSettings();
-            serializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-            //create json
-            string json = JsonConvert.SerializeObject(villagerData, Newtonsoft.Json.Formatting.Indented, serializerSettings);
-            string fileName = $"{villagerData.Name}.json";
-            string folderName = language;
-            string path = $@"/Users/estherhuecas/Documents/Stardew Valley/Scrapping/{folderName}";
-            string fullFileName = Path.Combine(path, fileName);
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            File.WriteAllText(fullFileName, json);
-        }
-
-
-        //Load document data about url
-        HtmlDocument GetDocument(string url)
-        {
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(url);
-            return doc;
-        }
-
-
         //Check clinic visit
-        String GetClinicVisitFamily(bool hasFamily, bool hasClinicVisit, HtmlDocument htmlDocument)
+        private string GetClinicVisitFamily(bool hasFamily, bool hasClinicVisit, HtmlDocument htmlDocument)
         {
             if (hasClinicVisit)
             {
@@ -110,9 +73,8 @@ namespace Scraping
             }
         }
 
-
         //Time location depends on seasons
-        List<TimeLocationModel> GetTimeLocation(HtmlDocument htmlDocument, int idTableSeason)
+        private List<TimeLocationModel> GetTimeLocation(HtmlDocument htmlDocument, int idTableSeason)
         {
             List<TimeLocationModel> timeLocationList = new List<TimeLocationModel>();
             HtmlNodeCollection seasonInfoNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTableSeason}]/tbody/tr[2]/td");
@@ -150,9 +112,8 @@ namespace Scraping
             return timeLocationList;
         }
 
-
         //GET Heart Events
-        List<HeartEventsModel> GetHeartEventsForVillager(HtmlDocument htmlDocument)
+        private List<HeartEventsModel> GetHeartEventsForVillager(HtmlDocument htmlDocument)
         {
             List<HeartEventsModel> heartEventList = new List<HeartEventsModel>();
             HtmlNodeCollection heartNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div");
@@ -201,9 +162,8 @@ namespace Scraping
             return heartEventList;
         }
 
-
         //GET Family
-        List<FamilyModel> GetFamilyPeopleForVillager(HtmlDocument htmlDocument)
+        private List<FamilyModel> GetFamilyPeopleForVillager(HtmlDocument htmlDocument)
         {
             List<FamilyModel> familyList = new List<FamilyModel>();
             HtmlNodeCollection familyNodes = htmlDocument.DocumentNode.SelectNodes("/html/body/div[3]/div[3]/div[5]/div/div[1]/table/tbody/tr[7]/td[2]");
@@ -225,9 +185,8 @@ namespace Scraping
             return familyList;
         }
 
-
         //GET Best Gifts
-        List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument, bool hasFamily, bool hasClinicVisit)
+        private List<BestGiftsModel> GetBestGiftsForVillager(HtmlDocument htmlDocument, bool hasFamily, bool hasClinicVisit)
         {
             List<BestGiftsModel> bestGifts = new List<BestGiftsModel>();
             int trIndex = 10; // Índice predeterminado para el último tr
@@ -264,9 +223,8 @@ namespace Scraping
             return bestGifts;
         }
 
-
         //GET Gifts
-        List<ItemsClass> GetGiftsForVillager(HtmlDocument htmlDocument, int idTable)
+        private List<ItemsClass> GetGiftsForVillager(HtmlDocument htmlDocument, int idTable)
         {
             List<ItemsClass> giftList = new List<ItemsClass>();
             HtmlNodeCollection bestGiftsNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody");
@@ -302,9 +260,8 @@ namespace Scraping
             return giftList;
         }
 
-
         //GET Ingredients
-        List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
+        private List<IngredientsModel> GetIngredientsModel(HtmlNode tdNodes)
         {
             List<IngredientsModel> ingredientList = new List<IngredientsModel>();
 
@@ -334,9 +291,8 @@ namespace Scraping
             return ingredientList;
         }
 
-
         //GET Movies
-        List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
+        private List<MoviesConcessionsModel> GetMoviesForVillager(HtmlDocument htmlDocument, int idTable)
         {
             List<MoviesConcessionsModel> movieList = new List<MoviesConcessionsModel>();
             HtmlNodeCollection movieNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[1]/table/tbody");
@@ -392,10 +348,8 @@ namespace Scraping
             return movieList;
         }
 
-
-
         //GET Concessions
-        List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument, int idTable)
+        private List<MoviesConcessionsModel> GetConcessionsForVillager(HtmlDocument htmlDocument, int idTable)
         {
             List<MoviesConcessionsModel> concessionList = new List<MoviesConcessionsModel>();
             HtmlNodeCollection concessionNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTable}]/tbody/tr/td[3]/table/tbody");
@@ -461,9 +415,8 @@ namespace Scraping
             return concessionList;
         }
 
-
         //GET Portraits Images
-        List<string> GetPortraitsForVillager(HtmlDocument htmlDocument, int startUlIndex, int endUlIndex)
+        private List<string> GetPortraitsForVillager(HtmlDocument htmlDocument, int startUlIndex, int endUlIndex)
         {
             List<string> portraitImagesList = new List<string>();
 
@@ -517,4 +470,3 @@ namespace Scraping
         }
     }
 }
-
