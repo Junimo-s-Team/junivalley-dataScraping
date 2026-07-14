@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using PuppeteerSharp;
 using Scraping.Common;
 using Scraping.Models;
 using System.Net;
@@ -20,27 +21,18 @@ namespace Scraping.Managers
             if (infoboxNode == null) throw new Exception("No se pudo encontrar la tabla 'infobox' en la página.");
 
             // Buscamos elementos por su contenido, no por su posición.
-            string GetInfoboxValue(string translatedKey) => infoboxNode.SelectSingleNode($".//th[normalize-space(text())='{translatedKey}']/following-sibling::td[1]")?.InnerText.Trim() ?? string.Empty;
-            HtmlNode GetInfoboxNode(string translatedKey) => infoboxNode.SelectSingleNode($".//th[normalize-space(text())='{translatedKey}']/following-sibling::td[1]");
+            string GetInfoboxValue(string translatedKey) => infoboxNode.SelectSingleNode($".//td[@id='infoboxsection' and contains(., '{translatedKey}')]/following-sibling::td[1]")?.InnerText.Trim() ?? string.Empty;
+            HtmlNode GetInfoboxNode(string translatedKey) => infoboxNode.SelectSingleNode($".//td[@id='infoboxsection' and contains(., '{translatedKey}')]/following-sibling::td[1]");
 
             string birthdayValue = GetInfoboxValue(keys["Birthday"]);
             var addressNode = GetInfoboxNode(keys["Address"])?.SelectSingleNode(".//a");
             string addressValue = addressNode?.InnerText.Trim() ?? string.Empty;
             string addressValueUrl = addressNode?.GetAttributeValue("href", string.Empty) ?? string.Empty;
 
-            // Selector robusto para la descripción. Busca la primera tabla después del infobox.
-            var descriptionNode = htmlDocument.DocumentNode.SelectSingleNode("//div[@id='infoboxborder']/following-sibling::table[1]//td[contains(@class, 'quotetext')]");
-            string description = descriptionNode != null ? WebUtility.HtmlDecode(descriptionNode.InnerText).Trim() : string.Empty;
-
-            // Selector robusto para la imagen de la timeline. Busca por el ID del encabezado.
-            var timelineHeader = htmlDocument.DocumentNode.SelectSingleNode("//span[span[@id='Timeline'] or span[@id='L.C3.ADnea_de_Tiempo']]");
-            string timelineImage = timelineHeader?.SelectSingleNode("ancestor::h2/following-sibling::div[1]//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-
             VillagerModel newVillager = new VillagerModel
             {
                 Name = villager.Name.Trim(),
                 Language = languageCode,
-                Description = description,
                 Birthday = WebUtility.HtmlDecode(birthdayValue).Trim(),
                 Address = addressValue,
                 HasFamily = villager.HasFamily,
@@ -48,7 +40,7 @@ namespace Scraping.Managers
                 LivesIn = GetInfoboxValue(keys["LivesIn"]),
                 HasClinicVisit = villager.HasClinicVisit,
                 BestGifts = GetBestGiftsForVillager(infoboxNode, keys),
-                //TimeLocation = GetTimeLocation(htmlDocument, idTableSeason: 2),
+                TimeLocation = GetTimeLocation(htmlDocument, keys),
                 // Usamos las claves correctas que corresponden a los IDs de los spans
                 LovedGifts = GetGiftsForVillager(htmlDocument, keys["Love"]),
                 LikedGifts = GetGiftsForVillager(htmlDocument, keys["Like"]),
@@ -58,18 +50,29 @@ namespace Scraping.Managers
                 Movies = GetMoviesForVillager(htmlDocument, keys),
                 Concessions = GetConcessionsForVillager(htmlDocument, keys),
                 ClinicVisit = WebUtility.HtmlDecode(GetInfoboxValue(keys["Clinic"])).Trim(),
-                TimeLine = timelineImage,
                 HeartEvents = GetHeartEventsForVillager(htmlDocument, keys),
                 Portraits = GetPortraitsForVillager(htmlDocument)
             };
 
+            // Asignar propiedades menos fiables por separado para evitar que un fallo detenga todo.
+            var descriptionNode = htmlDocument.DocumentNode.SelectSingleNode("//div[@id='infoboxborder']/following-sibling::table[1]//td[contains(@class, 'quotetext')]");
+            newVillager.Description = descriptionNode != null ? WebUtility.HtmlDecode(descriptionNode.InnerText).Trim() : string.Empty;
+
+            var timelineHeader = htmlDocument.DocumentNode.SelectSingleNode("//span[@id='Timeline' or @id='L.C3.ADnea_de_Tiempo' or @id='Línea_de_Tiempo']");
+            newVillager.TimeLine = timelineHeader?.SelectSingleNode("ancestor::h2/following-sibling::div[1]//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+
             // Obtener imágenes de la casa (si la dirección existe)
             if (!string.IsNullOrEmpty(addressValueUrl))
             {
-                HtmlDocument htmlDocumentAddressDetail = await GetDocument($"https://{GeneralConstants.BASE_URL}{addressValueUrl}");
+                string addressUrl = $"https://{GeneralConstants.BASE_URL}{addressValueUrl}";
+                
+                // Hacemos una sola llamada que navega y espera por el selector del mapa.
+                // Si el selector no aparece, el método continuará de todos modos.
+                HtmlDocument htmlDocumentAddressDetail = await GetDocument(addressUrl, "div.location-map img");
+
                 // Selectores robustos para las imágenes de la casa
                 var outsideHouseImageNode = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("//div[@id='infoboxborder']//a[@class='image']/img");
-                var mapHouseImageNode = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("//div[@id='infoboxborder']/following-sibling::div//img");
+                var mapHouseImageNode = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("//div[contains(@class, 'location-map')]//img");
                 newVillager.OutsideHouseImage = outsideHouseImageNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
                 newVillager.MapHouseImage = mapHouseImageNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
             }
@@ -78,36 +81,52 @@ namespace Scraping.Managers
         }
 
         //Time location depends on seasons
-        private List<TimeLocationModel> GetTimeLocation(HtmlDocument htmlDocument, int idTableSeason)
+        private List<TimeLocationModel> GetTimeLocation(HtmlDocument htmlDocument, Dictionary<string, string> keys)
         {
             List<TimeLocationModel> timeLocationList = new List<TimeLocationModel>();
-            HtmlNodeCollection seasonInfoNodes = htmlDocument.DocumentNode.SelectNodes($"/html/body/div[3]/div[3]/div[5]/div/table[{idTableSeason}]/tbody/tr[2]/td");
 
-            foreach (HtmlNode content in seasonInfoNodes)
+            // 1. Find the "Schedule" header
+            var scheduleHeader = htmlDocument.DocumentNode.SelectSingleNode($"//span[@id='{keys["Schedule"]}']/ancestor::h2");
+            if (scheduleHeader == null) return timeLocationList;
+
+            // 2. Find all collapsible season tables that follow the header
+            var seasonTables = scheduleHeader.SelectNodes("following-sibling::table[contains(@class, 'mw-collapsible')]");
+            if (seasonTables == null) return timeLocationList;
+
+            foreach (var seasonTable in seasonTables)
             {
-                if (content.Descendants("p").Any() || content.Descendants("table").Any())
+                // Extract the season name from the table header
+                string seasonName = seasonTable.SelectSingleNode(".//th//a")?.InnerText.Trim() ?? "Unknown Season";
+
+                // Get the main content cell for the season
+                var contentCell = seasonTable.SelectSingleNode(".//tr/td");
+                if (contentCell == null) continue;
+
+                string currentCondition = "Regular";
+
+                // Iterate through all child nodes (paragraphs and tables) in order
+                foreach (var node in contentCell.ChildNodes)
                 {
-                    foreach (HtmlNode pNode in content.Descendants("p"))
+                    if (node.Name == "p" && !string.IsNullOrWhiteSpace(node.InnerText))
                     {
-                        var tableNode = content.Descendants("table").FirstOrDefault();
-                        if (tableNode != null)
+                        currentCondition = WebUtility.HtmlDecode(node.InnerText).Trim();
+                    }
+                    else if (node.Name == "table" && node.HasClass("wikitable"))
+                    {
+                        var rows = node.SelectNodes(".//tr[td]");
+                        if (rows == null) continue;
+
+                        foreach (var row in rows)
                         {
-                            foreach (var tableContentNode in tableNode.Descendants("tr"))
+                            var cells = row.SelectNodes("td");
+                            if (cells != null && cells.Count >= 2)
                             {
-                                if (tableContentNode.Descendants("td").Any())
+                                timeLocationList.Add(new TimeLocationModel
                                 {
-                                    var tdNodes = tableContentNode.Descendants("td").ToList();
-                                    if (tdNodes.Count >= 2)
-                                    {
-                                        TimeLocationModel timeLocationInfo = new TimeLocationModel()
-                                        {
-                                            Day = pNode?.InnerText ?? string.Empty,
-                                            Time = tdNodes[0]?.InnerText ?? string.Empty,
-                                            Location = tdNodes[1]?.InnerText ?? string.Empty
-                                        };
-                                        timeLocationList.Add(timeLocationInfo);
-                                    }
-                                }
+                                    Day = $"{seasonName} - {currentCondition}",
+                                    Time = WebUtility.HtmlDecode(cells[0].InnerText).Trim(),
+                                    Location = WebUtility.HtmlDecode(cells[1].InnerText).Trim()
+                                });
                             }
                         }
                     }
@@ -162,7 +181,7 @@ namespace Scraping.Managers
             List<FamilyModel> familyList = new List<FamilyModel>();
 
             // 1. Buscar la celda de la familia usando su título traducido
-            HtmlNode familyCell = infoboxNode.SelectSingleNode($".//th[normalize-space(text())='{keys["Family"]}']/following-sibling::td[1]");
+            HtmlNode familyCell = infoboxNode.SelectSingleNode($".//td[@id='infoboxsection' and contains(., '{keys["Family"]}')]/following-sibling::td[1]");
             if (familyCell == null) return familyList;
 
             // 2. Iterar sobre cada miembro de la familia, que está en un párrafo <p>
@@ -190,7 +209,13 @@ namespace Scraping.Managers
             List<BestGiftsModel> bestGifts = new List<BestGiftsModel>();
             
             // 1. Buscar la celda que contiene los mejores regalos usando su título
-            HtmlNode bestGiftsCell = infoboxNode.SelectSingleNode($".//th[normalize-space(text())='{keys["BestGifts"]}']/following-sibling::td[1]");
+            HtmlNode bestGiftsCell = infoboxNode.SelectSingleNode($".//td[@id='infoboxsection' and contains(., '{keys["BestGifts"]}')]/following-sibling::td[1]");
+            // Fallback: Si no encuentra "Best Gifts", busca "Loved Gifts" (inconsistencia de la wiki)
+            if (bestGiftsCell == null)
+            {
+                bestGiftsCell = infoboxNode.SelectSingleNode($".//td[@id='infoboxsection' and contains(., 'Loved Gifts')]/following-sibling::td[1]");
+            }
+
             if (bestGiftsCell == null) return bestGifts;
 
             // 2. Iterar sobre cada regalo, que está dentro de un <span>

@@ -13,7 +13,7 @@ namespace Scraping.Managers
         }
 
         //Load document data about url
-        public async Task<HtmlDocument> GetDocument(string url)
+        public async Task<HtmlDocument> GetDocument(string url, string? waitForSelector = null)
         {
             var options = new LaunchOptions { Headless = true };
             
@@ -28,6 +28,18 @@ namespace Scraping.Managers
             await page.SetUserAgentAsync("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36");
 
             await page.GoToAsync(url, new NavigationOptions { Timeout = 60000 }); // Aumentamos el timeout a 60 segundos
+
+            // Si se proporciona un selector, esperamos a que aparezca.
+            // Si no aparece en el tiempo límite, continuamos sin lanzar un error.
+            if (!string.IsNullOrEmpty(waitForSelector))
+            {
+                try
+                {
+                    await page.WaitForSelectorAsync(waitForSelector, new WaitForSelectorOptions { Timeout = 5000 });
+                }
+                catch (WaitTaskTimeoutException) { /* Ignoramos el timeout y continuamos */ }
+            }
+
             string content = await page.GetContentAsync();
 
             HtmlDocument doc = new HtmlDocument();

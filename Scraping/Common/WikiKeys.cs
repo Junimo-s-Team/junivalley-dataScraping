@@ -15,6 +15,7 @@
             // Claves para encabezados de sección (IDs o texto)
             { "HeartEvents", new Dictionary<string, string> { { "EN", "Heart_Events" }, { "ES", "Eventos_de_corazón" } } },
             { "Gifts", new Dictionary<string, string> { { "EN", "Gifts" }, { "ES", "Regalos" } } },
+            { "Schedule", new Dictionary<string, string> { { "EN", "Schedule" }, { "ES", "Agenda" } } },
             { "MoviesAndConcessions", new Dictionary<string, string> { { "EN", "Movies_.26_Concessions" }, { "ES", "Pel.C3.ADculas_y_Refrigerios" } } },
 
             // Claves para tipos de regalos
