@@ -8,6 +8,11 @@ namespace Scraping.Managers
 {
     public class VillagerManager : BaseManager
     {
+        // Constructor para recibir la instancia del navegador
+        public VillagerManager(IBrowser browser) : base(browser)
+        {
+        }
+
         //Villager Detail
         public async Task<VillagerModel> GetVillagerPrimaryData(string url, VillagerModel villager, string languageCode)
         {
@@ -51,7 +56,9 @@ namespace Scraping.Managers
                 Concessions = GetConcessionsForVillager(htmlDocument, keys),
                 ClinicVisit = WebUtility.HtmlDecode(GetInfoboxValue(keys["Clinic"])).Trim(),
                 HeartEvents = GetHeartEventsForVillager(htmlDocument, keys),
-                Portraits = GetPortraitsForVillager(htmlDocument)
+                CanBeMarriage = villager.CanBeMarriage,
+                Portraits = GetPortraitsForVillager(htmlDocument),
+                SpousePatios = villager.CanBeMarriage ? GetSpousePatios(htmlDocument) : new List<SpousePatioModel>()
             };
 
             // Asignar propiedades menos fiables por separado para evitar que un fallo detenga todo.
@@ -73,8 +80,13 @@ namespace Scraping.Managers
                 // Selectores robustos para las imágenes de la casa
                 var outsideHouseImageNode = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("//div[@id='infoboxborder']//a[@class='image']/img");
                 var mapHouseImageNode = htmlDocumentAddressDetail.DocumentNode.SelectSingleNode("//div[contains(@class, 'location-map')]//img");
-                newVillager.OutsideHouseImage = outsideHouseImageNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
-                newVillager.MapHouseImage = mapHouseImageNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                
+                var outsideImageSrc = outsideHouseImageNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                var mapImageSrc = mapHouseImageNode?.GetAttributeValue("data-src", string.Empty) ?? string.Empty;
+
+                // Aseguramos que las URLs sean completas si son relativas
+                newVillager.OutsideHouseImage = outsideImageSrc.StartsWith("/") ? $"https://{GeneralConstants.BASE_URL}{outsideImageSrc}" : outsideImageSrc;
+                newVillager.MapHouseImage = mapImageSrc.StartsWith("/") ? $"https://{GeneralConstants.BASE_URL}{mapImageSrc}" : mapImageSrc;
             }
 
             return newVillager;
@@ -96,7 +108,7 @@ namespace Scraping.Managers
             foreach (var seasonTable in seasonTables)
             {
                 // Extract the season name from the table header
-                string seasonName = seasonTable.SelectSingleNode(".//th//a")?.InnerText.Trim() ?? "Unknown Season";
+                string seasonName = seasonTable.SelectSingleNode(".//th[contains(@style, 'background-color')]//a")?.InnerText.Trim() ?? "Unknown Season";
 
                 // Get the main content cell for the season
                 var contentCell = seasonTable.SelectSingleNode(".//tr/td");
@@ -438,6 +450,34 @@ namespace Scraping.Managers
             }
 
             return portraitImagesList;
+        }
+
+        //GET Spouse Patios
+        private List<SpousePatioModel> GetSpousePatios(HtmlDocument htmlDocument)
+        {
+            var spousePatios = new List<SpousePatioModel>();
+
+            // 1. Anclaje: el encabezado de la sección "Marriage".
+            var marriageHeader = htmlDocument.DocumentNode.SelectSingleNode("//span[@id='Marriage' or @id='Matrimonio']");
+            if (marriageHeader == null) return spousePatios;
+
+            // 2. Buscar la galería de imágenes que sigue al encabezado.
+            var galleryNode = marriageHeader.SelectSingleNode("ancestor::h2/following-sibling::ul[contains(@class, 'gallery')]");
+            if (galleryNode == null) return spousePatios;
+
+            // 3. Iterar sobre cada elemento de la galería.
+            var galleryItems = galleryNode.SelectNodes(".//li[@class='gallerybox']");
+            if (galleryItems == null) return spousePatios;
+
+            foreach (var item in galleryItems)
+            {
+                spousePatios.Add(new SpousePatioModel
+                {
+                    Image = item.SelectSingleNode(".//a[@class='image']/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
+                    Description = WebUtility.HtmlDecode(item.SelectSingleNode(".//div[@class='gallerytext']")?.InnerText.Trim() ?? string.Empty)
+                });
+            }
+            return spousePatios;
         }
     }
 }

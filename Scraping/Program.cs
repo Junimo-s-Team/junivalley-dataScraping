@@ -1,15 +1,22 @@
-﻿using System.Threading.Tasks;
+﻿using PuppeteerSharp;
+using System.Threading.Tasks;
 using Scraping.Common;
 using Scraping.Managers;
 using Scraping.Models;
 
-VillagerManager villagerManager = new VillagerManager();
+// 1. Inicializamos el navegador una sola vez.
+var options = new LaunchOptions { Headless = true };
+using var browserFetcher = new BrowserFetcher();
+await browserFetcher.DownloadAsync();
+await using var browser = await Puppeteer.LaunchAsync(options);
+
+// 2. Pasamos la instancia del navegador al manager.
+VillagerManager villagerManager = new VillagerManager(browser);
 List<VillagerModel> villagersFailure = new List<VillagerModel>();
-//Call VillagerManager
 
-await ProcessVillagers();
+await ProcessVillagers(villagerManager);
 
-async Task ProcessVillagers()
+async Task ProcessVillagers(VillagerManager manager)
 {
     foreach (var villager in GeneralConstants.VILLAGERS)
     {
@@ -25,8 +32,8 @@ async Task ProcessVillagers()
 
                 string url = $"https://{languagePrefix.ToLower()}{GeneralConstants.BASE_URL}/{villagerNameForUrl}";
 
-                VillagerModel villagerData = await villagerManager.GetVillagerPrimaryData(url, villager, languageCode);
-                villagerManager.ConvertToJson(villagerData, villagerData.Language);
+                VillagerModel villagerData = await manager.GetVillagerPrimaryData(url, villager, languageCode);
+                manager.ConvertToJson(villagerData, villagerData.Language);
                 Console.WriteLine($"[ÉXITO] Guardado: {villager.Name} en idioma {villagerData.Language}");
             }
 

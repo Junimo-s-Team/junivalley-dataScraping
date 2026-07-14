@@ -8,21 +8,18 @@ namespace Scraping.Managers
 {
     public class BaseManager
     {
-        public BaseManager() 
-        { 
+        private readonly IBrowser _browser;
+
+        public BaseManager(IBrowser browser) 
+        {
+            _browser = browser;
         }
 
         //Load document data about url
         public async Task<HtmlDocument> GetDocument(string url, string? waitForSelector = null)
         {
-            var options = new LaunchOptions { Headless = true };
-            
-            // Descarga Chromium si no existe
-            using var browserFetcher = new BrowserFetcher();
-            await browserFetcher.DownloadAsync();
-
-            await using var browser = await Puppeteer.LaunchAsync(options);
-            await using var page = await browser.NewPageAsync();
+            // Reutilizamos la instancia del navegador en lugar de crear una nueva.
+            await using var page = await _browser.NewPageAsync();
             
             // Hacemos que parezca un navegador normal
             await page.SetUserAgentAsync("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36");

@@ -52,6 +52,8 @@
 
         public bool CanBeMarriage { get; set; }
 
+        public List<SpousePatioModel> SpousePatios { get; set; } = new List<SpousePatioModel>();
+
         public List<string> Portraits { get; set; } = new List<string>();
     }
 }
