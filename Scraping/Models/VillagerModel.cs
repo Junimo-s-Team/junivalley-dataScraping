@@ -16,6 +16,8 @@
 
         public string OutsideHouseImage { get; set; } = string.Empty;
 
+        public string InsideHouseImage { get; set; } = string.Empty;
+
         public string MapHouseImage { get; set; } = string.Empty;
 
         public bool HasFamily { get; set; }

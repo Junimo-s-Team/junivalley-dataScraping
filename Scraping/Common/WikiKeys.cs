@@ -1,4 +1,4 @@
-﻿namespace Scraping.Common
+﻿﻿namespace Scraping.Common
 {
     public static class WikiKeys
     {
@@ -17,6 +17,7 @@
             { "Gifts", new Dictionary<string, string> { { "EN", "Gifts" }, { "ES", "Regalos" } } },
             { "Schedule", new Dictionary<string, string> { { "EN", "Schedule" }, { "ES", "Agenda" } } },
             { "MoviesAndConcessions", new Dictionary<string, string> { { "EN", "Movies_.26_Concessions" }, { "ES", "Pel.C3.ADculas_y_Refrigerios" } } },
+            { "Interior", new Dictionary<string, string> { { "EN", "Interior" }, { "ES", "Interior" } } },
 
             // Claves para tipos de regalos
             { "Love", new Dictionary<string, string> { { "EN", "Love" }, { "ES", "Le_encanta" } } },

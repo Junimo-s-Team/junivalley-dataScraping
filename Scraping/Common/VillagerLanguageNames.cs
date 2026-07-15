@@ -42,7 +42,28 @@
             { "Penny", new Dictionary<string, string> {
                 { "EN", "Penny" }, { "ES", "Penny" }, { "FR", "Penny" }, { "PT", "Penny" }, { "DE", "Penny" }, { "JA", "ペニー" }
             }},
-            // ... Añadir el resto de aldeanos aquí
+            { "Caroline", new Dictionary<string, string> { { "EN", "Caroline" }, { "ES", "Caroline" } } },
+            { "Clint", new Dictionary<string, string> { { "EN", "Clint" }, { "ES", "Clint" } } },
+            { "Demetrius", new Dictionary<string, string> { { "EN", "Demetrius" }, { "ES", "Demetrius" } } },
+            { "Dwarf", new Dictionary<string, string> { { "EN", "Dwarf" }, { "ES", "Enano" } }},
+            { "Evelyn", new Dictionary<string, string> { { "EN", "Evelyn" }, { "ES", "Evelyn" } } },
+            { "George", new Dictionary<string, string> { { "EN", "George" }, { "ES", "George" } } },
+            { "Gus", new Dictionary<string, string> { { "EN", "Gus" }, { "ES", "Gus" } } },
+            { "Jas", new Dictionary<string, string> { { "EN", "Jas" }, { "ES", "Jas" } } },
+            { "Jodi", new Dictionary<string, string> { { "EN", "Jodi" }, { "ES", "Jodi" } } },
+            { "Kent", new Dictionary<string, string> { { "EN", "Kent" }, { "ES", "Kent" } } },
+            { "Krobus", new Dictionary<string, string> { { "EN", "Krobus" }, { "ES", "Krobus" } } },
+            { "Leo", new Dictionary<string, string> { { "EN", "Leo" }, { "ES", "Leo" } } },
+            { "Lewis", new Dictionary<string, string> { { "EN", "Lewis" }, { "ES", "Lewis" } } },
+            { "Linus", new Dictionary<string, string> { { "EN", "Linus" }, { "ES", "Linus" } } },
+            { "Marnie", new Dictionary<string, string> { { "EN", "Marnie" }, { "ES", "Marnie" } } },
+            { "Pam", new Dictionary<string, string> { { "EN", "Pam" }, { "ES", "Pam" } } },
+            { "Pierre", new Dictionary<string, string> { { "EN", "Pierre" }, { "ES", "Pierre" } } },
+            { "Robin", new Dictionary<string, string> { { "EN", "Robin" }, { "ES", "Robin" } } },
+            { "Sandy", new Dictionary<string, string> { { "EN", "Sandy" }, { "ES", "Sandy" } } },
+            { "Vincent", new Dictionary<string, string> { { "EN", "Vincent" }, { "ES", "Vincent" } } },
+            { "Willy", new Dictionary<string, string> { { "EN", "Willy" }, { "ES", "Willy" } } },
+            { "Wizard", new Dictionary<string, string> { { "EN", "Wizard" }, { "ES", "Mago" } }},
         };
 
         /// <summary>

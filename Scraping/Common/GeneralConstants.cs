@@ -5,8 +5,9 @@ namespace Scraping.Common
     static class GeneralConstants
     {
         public const string BASE_URL = "stardewvalleywiki.com";
-        public static readonly List<string> LANGUAGES = new List<string> { "", "ES.", "PT.", "DE.", "FR." };
+        public static readonly List<string> LANGUAGES = new List<string> { "", "ES." };
 
+        // IMPORTANTE: Cada aldeano en esta lista debe tener una entrada correspondiente en VillagerLanguageNames.cs
         public static readonly List<VillagerModel> VILLAGERS = new List<VillagerModel>
         {
             //marriage candidates
@@ -31,22 +32,23 @@ namespace Scraping.Common
             new VillagerModel{ Id = 13, Name = "Caroline", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 14, Name = "Clint", HasFamily = false, HasClinicVisit = true },
             new VillagerModel{ Id = 15, Name = "Demetrius", HasFamily = true, HasClinicVisit = true },
-            new VillagerModel{ Id = 16, Name = "Dwarf", HasFamily = false, HasClinicVisit = false }, // contains differents model (shop, relationships...)
+            new VillagerModel{ Id = 16, Name = "Dwarf", HasFamily = false, HasClinicVisit = false },
+            new VillagerModel{ Id = 17, Name = "Evelyn", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 18, Name = "George", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 19, Name = "Gus", HasFamily = false, HasClinicVisit = true },
             new VillagerModel{ Id = 20, Name = "Jas", HasFamily = true, HasClinicVisit = true },
-            new VillagerModel{ Id = 21, Name = "Jodi", HasFamily = true, HasClinicVisit = true }, // clinicVisit is different because has two different dates 
+            new VillagerModel{ Id = 21, Name = "Jodi", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 22, Name = "Kent", HasFamily = true, HasClinicVisit = false },
-            new VillagerModel{ Id = 23, Name = "Krobus", HasFamily = false, HasClinicVisit = false }, // marriage: no, but can become a roommate
-            new VillagerModel{ Id = 24, Name = "Leo", HasFamily = false, HasClinicVisit = false }, // address is different (hut <6 <3 Treehouse (≥6 <3)
+            new VillagerModel{ Id = 23, Name = "Krobus", HasFamily = false, HasClinicVisit = false },
+            new VillagerModel{ Id = 24, Name = "Leo", HasFamily = false, HasClinicVisit = false },
             new VillagerModel{ Id = 25, Name = "Lewis", HasFamily = false, HasClinicVisit = true },
             new VillagerModel{ Id = 26, Name = "Linus", HasFamily = false, HasClinicVisit = false },
-            new VillagerModel{ Id = 27, Name = "Marnie", HasFamily = true, HasClinicVisit = true }, // clinicVisit is different because has two different dates
+            new VillagerModel{ Id = 27, Name = "Marnie", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 28, Name = "Pam", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 29, Name = "Pierre", HasFamily = true, HasClinicVisit = false },
             new VillagerModel{ Id = 30, Name = "Robin", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 31, Name = "Sandy", HasFamily = false, HasClinicVisit = false },
-            new VillagerModel{ Id = 32, Name = "Vincent", HasFamily = true, HasClinicVisit = true }, // worse birthday?
+            new VillagerModel{ Id = 32, Name = "Vincent", HasFamily = true, HasClinicVisit = true },
             new VillagerModel{ Id = 33, Name = "Willy", HasFamily = false, HasClinicVisit = true },
             new VillagerModel{ Id = 34, Name = "Wizard", HasFamily = false, HasClinicVisit = false }
         };
