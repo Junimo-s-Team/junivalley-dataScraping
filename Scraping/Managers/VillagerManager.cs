@@ -38,6 +38,7 @@ namespace Scraping.Managers
 
             VillagerModel newVillager = new VillagerModel
             {
+                Id = villager.Id,
                 Name = villager.Name,
                 Language = languageCode,
                 Birthday = WebUtility.HtmlDecode(birthdayValue).Trim(),
