@@ -67,7 +67,7 @@ namespace Scraping.Managers
             newVillager.Description = GetDescription(htmlDocument);
             newVillager.TimeLine = GetTimelineImage(htmlDocument, keys);
 
-            var houseImages = await GetHouseImages(addressValueUrl, keys);
+            var houseImages = await GetHouseImages(addressValueUrl, keys, languageCode);
             newVillager.OutsideHouseImage = houseImages.outside;
             newVillager.MapHouseImage = houseImages.map;
             newVillager.InsideHouseImage = houseImages.interior;
@@ -106,7 +106,7 @@ namespace Scraping.Managers
                 if (table.HasClass("mw-collapsible"))
                 {
                     var headerNode = table.SelectSingleNode(".//th");
-                    string mainContext = headerNode != null ? WebUtility.HtmlDecode(headerNode.InnerText).Trim().Replace("Collapse", "").Replace("Expand", "").Replace("Contraer", "").Replace("Expandir", "").Trim() : "Unknown";
+                    string mainContext = headerNode != null ? WebUtility.HtmlDecode(headerNode.InnerText).Replace("\u00A0", " ").Trim().Replace("Collapse", "").Replace("Expand", "").Replace("Contraer", "").Replace("Expandir", "").Replace("ir a ", "").Replace("ir ", "").Trim() : "Unknown";
 
                     // Caso 1: La tabla contiene sub-tablas anidadas (formato de Alex).
                     var contentCell = table.SelectSingleNode(".//table[contains(@class,'wikitable')]")?.ParentNode;
@@ -206,7 +206,7 @@ namespace Scraping.Managers
             if (heartEventsHeader == null) return heartEventList; // No hay eventos de corazón
 
             // 2. Encontrar todos los encabezados H3 que son hermanos siguientes (los títulos de cada evento)
-            HtmlNodeCollection eventTitleNodes = heartEventsHeader.SelectNodes("following-sibling::h3");
+            HtmlNodeCollection eventTitleNodes = heartEventsHeader.SelectNodes("following-sibling::h3 | following-sibling::h4");
             if (eventTitleNodes == null) return heartEventList;
 
             foreach (var titleNode in eventTitleNodes)
@@ -214,7 +214,7 @@ namespace Scraping.Managers
                 // 3. Para cada título, buscar la información en los elementos que le siguen
                 var heartEvent = new HeartEventsModel
                 {
-                    Title = titleNode.SelectSingleNode(".//span[@class='mw-headline']")?.InnerText.Trim() ?? string.Empty
+                    Title = titleNode.SelectSingleNode(".//span[@class='mw-headline']")?.InnerText.Trim() ?? titleNode.InnerText.Trim()
                 };
 
                 // El siguiente párrafo <p> suele contener la imagen del corazón
@@ -222,7 +222,7 @@ namespace Scraping.Managers
                 heartEvent.HeartsImage = ToAbsoluteUrl(imageParagraph?.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty));
 
                 // El siguiente párrafo <p> después de la imagen suele ser la descripción
-                var detailsParagraph = titleNode.SelectSingleNode("following-sibling::p[2] | following-sibling::div[1]/p[2] | following-sibling::div[contains(@class, 'mw-collapsible')]/p");
+                var detailsParagraph = titleNode.SelectSingleNode("following-sibling::p[2] | following-sibling::div[1]/p[2] | following-sibling::div[contains(@class, 'mw-collapsible')]/p | following-sibling::div[1]");
                 if (detailsParagraph != null)
                 {
                     // Limpiamos el texto para quitar las notas de edición como "[1]"
@@ -255,11 +255,16 @@ namespace Scraping.Managers
                 var nameNode = pNode.SelectSingleNode(".//a");
                 if (nameNode != null)
                 {
+                    string name = nameNode.InnerText.Trim();
+                    // Lógica mejorada: Decodifica el HTML, resta el nombre y limpia todos los caracteres extra.
+                    string fullText = WebUtility.HtmlDecode(pNode.InnerText);
+                    string description = fullText.Replace(name, "").Trim(' ', '(', ')', '\u00A0');
+
                     FamilyModel person = new FamilyModel
                     {
                         Image = ToAbsoluteUrl(pNode.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty)),
-                        Name = nameNode.InnerText.Trim(),
-                        Description = pNode.InnerText.Substring(pNode.InnerText.IndexOf("(") + 1).Replace("(", string.Empty).Replace(")", string.Empty) ?? string.Empty
+                        Name = name,
+                        Description = description
                     };
                     familyList.Add(person);
                 }
@@ -547,14 +552,16 @@ namespace Scraping.Managers
             return timelineHeader?.SelectSingleNode("following-sibling::div[1]//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
         }
 
-        private async Task<(string outside, string map, string interior)> GetHouseImages(string addressUrlPart, Dictionary<string, string> keys)
+        private async Task<(string outside, string map, string interior)> GetHouseImages(string addressUrlPart, Dictionary<string, string> keys, string languageCode)
         {
             if (string.IsNullOrEmpty(addressUrlPart))
             {
                 return (string.Empty, string.Empty, string.Empty);
             }
 
-            string addressUrl = $"https://{GeneralConstants.BASE_URL}{addressUrlPart}";
+            string languagePrefix = languageCode.ToUpper() == "EN" ? "" : $"{languageCode.ToLower()}.";
+            string baseUrl = languageCode.ToUpper() == "ES" ? "es.stardewvalleywiki.com" : GeneralConstants.BASE_URL;
+            string addressUrl = $"https://{baseUrl}{addressUrlPart}";
 
             // Navigate and wait for the map selector.
             HtmlDocument htmlDocumentAddressDetail = await GetDocument(addressUrl, "div.mapcontainer img");

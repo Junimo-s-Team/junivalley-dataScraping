@@ -63,7 +63,7 @@
             { "Sandy", new Dictionary<string, string> { { "EN", "Sandy" }, { "ES", "Sandy" } } },
             { "Vincent", new Dictionary<string, string> { { "EN", "Vincent" }, { "ES", "Vincent" } } },
             { "Willy", new Dictionary<string, string> { { "EN", "Willy" }, { "ES", "Willy" } } },
-            { "Wizard", new Dictionary<string, string> { { "EN", "Wizard" }, { "ES", "Mago" } }},
+            { "Wizard", new Dictionary<string, string> { { "EN", "Wizard" }, { "ES", "Rasmodius" } }},
         };
 
         /// <summary>
