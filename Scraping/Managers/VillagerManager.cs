@@ -84,9 +84,9 @@ namespace Scraping.Managers
                 var outsideImageSrc = outsideHouseImageNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
                 var mapImageSrc = mapHouseImageNode?.GetAttributeValue("data-src", string.Empty) ?? string.Empty;
 
-                // Aseguramos que las URLs sean completas si son relativas
-                newVillager.OutsideHouseImage = outsideImageSrc.StartsWith("/") ? $"https://{GeneralConstants.BASE_URL}{outsideImageSrc}" : outsideImageSrc;
-                newVillager.MapHouseImage = mapImageSrc.StartsWith("/") ? $"https://{GeneralConstants.BASE_URL}{mapImageSrc}" : mapImageSrc;
+                // Usamos la función de ayuda para asegurar URLs absolutas
+                newVillager.OutsideHouseImage = ToAbsoluteUrl(outsideImageSrc);
+                newVillager.MapHouseImage = ToAbsoluteUrl(mapImageSrc);
             }
 
             return newVillager;
@@ -107,10 +107,17 @@ namespace Scraping.Managers
 
             foreach (var seasonTable in seasonTables)
             {
-                // Extract the season name from the table header
-                string seasonName = seasonTable.SelectSingleNode(".//th[contains(@style, 'background-color')]//a")?.InnerText.Trim() ?? "Unknown Season";
-
-                // Get the main content cell for the season
+                // Selector específico para el nombre de la estación, evitando "Expand".
+                // Busca el enlace dentro del span con la fuente más grande.
+                var seasonNameNode = seasonTable.SelectSingleNode(".//th//span[@style='font-size: larger;']");
+                string seasonName = "Unknown Season";
+                if (seasonNameNode != null)
+                {
+                    // Intenta obtener el texto del enlace 'a' primero, si no, toma el texto del span directamente.
+                    // Esto maneja casos como "Spring" (con enlace) y "Marriage" (sin enlace).
+                    var rawSeasonName = seasonNameNode.SelectSingleNode("./a")?.InnerText ?? seasonNameNode.InnerText;
+                    seasonName = WebUtility.HtmlDecode(rawSeasonName).Trim();
+                }
                 var contentCell = seasonTable.SelectSingleNode(".//tr/td");
                 if (contentCell == null) continue;
 
@@ -121,6 +128,7 @@ namespace Scraping.Managers
                 {
                     if (node.Name == "p" && !string.IsNullOrWhiteSpace(node.InnerText))
                     {
+                        // Limpiamos el texto para eliminar entidades HTML como &nbsp;
                         currentCondition = WebUtility.HtmlDecode(node.InnerText).Trim();
                     }
                     else if (node.Name == "table" && node.HasClass("wikitable"))
@@ -169,11 +177,11 @@ namespace Scraping.Managers
                 };
 
                 // El siguiente párrafo <p> suele contener la imagen del corazón
-                var imageParagraph = titleNode.SelectSingleNode("following-sibling::p[1]");
-                heartEvent.HeartsImage = imageParagraph?.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                var imageParagraph = titleNode.SelectSingleNode("following-sibling::p[1] | following-sibling::div[1]/p[1]");
+                heartEvent.HeartsImage = ToAbsoluteUrl(imageParagraph?.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty));
 
                 // El siguiente párrafo <p> después de la imagen suele ser la descripción
-                var detailsParagraph = imageParagraph?.SelectSingleNode("following-sibling::p[1]");
+                var detailsParagraph = titleNode.SelectSingleNode("following-sibling::p[2] | following-sibling::div[1]/p[2] | following-sibling::div[contains(@class, 'mw-collapsible')]/p");
                 if (detailsParagraph != null)
                 {
                     // Limpiamos el texto para quitar las notas de edición como "[1]"
@@ -204,7 +212,7 @@ namespace Scraping.Managers
                 {
                     FamilyModel person = new FamilyModel
                     {
-                        Image = pNode.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
+                        Image = ToAbsoluteUrl(pNode.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty)),
                         Name = nameNode.InnerText.Trim(),
                         Description = pNode.InnerText.Substring(pNode.InnerText.IndexOf("(") + 1).Replace("(", string.Empty).Replace(")", string.Empty) ?? string.Empty
                     };
@@ -241,7 +249,7 @@ namespace Scraping.Managers
                     bestGifts.Add(new BestGiftsModel
                     {
                         Name = nameNode.InnerText.Trim(),
-                        Image = imageNode.GetAttributeValue("src", string.Empty)
+                        Image = ToAbsoluteUrl(imageNode.GetAttributeValue("src", string.Empty))
                     });
                 }
             }
@@ -286,7 +294,7 @@ namespace Scraping.Managers
                 var item = new ItemsClass
                 {
                     Id = giftList.Count,
-                    Image = cells[0].SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
+                    Image = ToAbsoluteUrl(cells[0].SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty)),
                     Name = cells[1].InnerText.Trim(),
                     Description = cells[2].InnerText.Trim(),
                     Source = cells[3].InnerText.Trim(),
@@ -334,7 +342,7 @@ namespace Scraping.Managers
 
                     IngredientsModel ingredientsModel = new IngredientsModel
                     {
-                        Image = span.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
+                        Image = ToAbsoluteUrl(span.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty)),
                         Name = span.SelectSingleNode(".//a")?.InnerText.Trim() ?? string.Empty,
                         Quantity = quantity
                     };
@@ -412,7 +420,7 @@ namespace Scraping.Managers
                         {
                             Type = currentType,
                             Title = text,
-                            Image = tempDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty
+                            Image = ToAbsoluteUrl(tempDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("src", string.Empty))
                         });
                     }
                 }
@@ -444,7 +452,7 @@ namespace Scraping.Managers
                     var imageSrc = imgNode.GetAttributeValue("src", string.Empty);
                     if (!string.IsNullOrEmpty(imageSrc))
                     {
-                        portraitImagesList.Add(imageSrc);
+                        portraitImagesList.Add(ToAbsoluteUrl(imageSrc));
                     }
                 }
             }
@@ -473,11 +481,25 @@ namespace Scraping.Managers
             {
                 spousePatios.Add(new SpousePatioModel
                 {
-                    Image = item.SelectSingleNode(".//a[@class='image']/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty,
+                    Image = ToAbsoluteUrl(item.SelectSingleNode(".//a[@class='image']/img")?.GetAttributeValue("src", string.Empty)),
                     Description = WebUtility.HtmlDecode(item.SelectSingleNode(".//div[@class='gallerytext']")?.InnerText.Trim() ?? string.Empty)
                 });
             }
             return spousePatios;
+        }
+
+        // Función de ayuda para convertir URLs relativas a absolutas
+        private string ToAbsoluteUrl(string? url)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                return string.Empty;
+            }
+            if (url.StartsWith("/mediawiki/"))
+            {
+                return $"https://{GeneralConstants.BASE_URL}{url}";
+            }
+            return url;
         }
     }
 }
