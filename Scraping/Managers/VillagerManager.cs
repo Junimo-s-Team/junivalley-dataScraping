@@ -582,19 +582,5 @@ namespace Scraping.Managers
 
             return (ToAbsoluteUrl(outsideImageSrc), ToAbsoluteUrl(mapImageSrc), ToAbsoluteUrl(interiorImageSrc));
         }
-
-        // Función de ayuda para convertir URLs relativas a absolutas
-        private string ToAbsoluteUrl(string? url)
-        {
-            if (string.IsNullOrEmpty(url))
-            {
-                return string.Empty;
-            }
-            if (url.StartsWith("/mediawiki/"))
-            {
-                return $"https://{GeneralConstants.BASE_URL}{url}";
-            }
-            return url;
-        }
     }
 }

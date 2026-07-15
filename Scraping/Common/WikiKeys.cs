@@ -1,9 +1,11 @@
-﻿﻿namespace Scraping.Common
+﻿namespace Scraping.Common
 {
     public static class WikiKeys
     {
         private static readonly Dictionary<string, Dictionary<string, string>> Translations = new Dictionary<string, Dictionary<string, string>>
         {
+            // MARK: - Villagers
+
             // Claves para el Infobox
             { "Birthday", new Dictionary<string, string> { { "EN", "Birthday" }, { "ES", "Cumpleaños" } } },
             { "Address", new Dictionary<string, string> { { "EN", "Address" }, { "ES", "Dirección" } } },
@@ -25,6 +27,11 @@
             { "Neutral", new Dictionary<string, string> { { "EN", "Neutral" }, { "ES", "Neutral" } } },
             { "Dislike", new Dictionary<string, string> { { "EN", "Dislike" }, { "ES", "No_le_gusta" } } },
             { "Hate", new Dictionary<string, string> { { "EN", "Hate" }, { "ES", "Odia" } } },
+
+            // MARK: - Missions
+            
+            { "QuestItems", new Dictionary<string, string> { { "EN", "List_of_Quest_Items" }, { "ES", "Lista_de_objetos_de_misi.C3.B3n" } } },
+
         };
 
         /// <summary>

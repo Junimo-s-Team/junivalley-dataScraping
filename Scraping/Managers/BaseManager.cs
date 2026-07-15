@@ -1,8 +1,9 @@
-﻿﻿using HtmlAgilityPack;
+﻿﻿﻿﻿using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using PuppeteerSharp;
 using Scraping.Models;
+using Scraping.Common;
 
 namespace Scraping.Managers
 {
@@ -48,7 +49,7 @@ namespace Scraping.Managers
         public void ConvertToJson(VillagerModel villagerData, string language)
         {
             string fileName = $"{villagerData.Name}.json";
-            string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/Stardew Valley/Scrapping/{language}";
+            string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/Stardew Valley/Scrapping/{language}/villagers";
             string fullFileName = Path.Combine(path, fileName);
             //lowercase
             var serializerSettings = new JsonSerializerSettings();
@@ -60,6 +61,20 @@ namespace Scraping.Managers
                 Directory.CreateDirectory(path);
             }
             File.WriteAllText(fullFileName, json);
+        }
+
+        // Función de ayuda para convertir URLs relativas a absolutas
+        protected string ToAbsoluteUrl(string? url)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                return string.Empty;
+            }
+            if (url.StartsWith("/mediawiki/"))
+            {
+                return $"https://{GeneralConstants.BASE_URL}{url}";
+            }
+            return url;
         }
     }
 }
