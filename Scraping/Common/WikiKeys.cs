@@ -25,6 +25,18 @@
             { "Neutral", new Dictionary<string, string> { { "EN", "Neutral" }, { "ES", "Neutral" } } },
             { "Dislike", new Dictionary<string, string> { { "EN", "Dislike" }, { "ES", "No_le_gusta" } } },
             { "Hate", new Dictionary<string, string> { { "EN", "Hate" }, { "ES", "Odia" } } },
+
+            // MARK: - Missions
+            
+            { "QuestItems", new Dictionary<string, string> { { "EN", "List_of_Quest_Items" }, { "ES", "Lista_de_objetos_de_misi.C3.B3n" } } },
+
+            // MARK: - Farmhouse
+            { "FarmhouseUpgrades", new Dictionary<string, string> { { "EN", "Upgrades" }, { "ES", "Mejoras" } } },
+            { "FarmhouseRenovations", new Dictionary<string, string> { { "EN", "Renovations" }, { "ES", "Renovaciones" } } },
+            { "SpouseRooms", new Dictionary<string, string> { { "EN", "Spouse.2FRoommate_Rooms" }, { "ES", "Habitaciones_para_c.C3.B3nyuges.2Fcompa.C3.B1eros" } } },
+
+            // MARK: - Bundles
+            { "Bundles", new Dictionary<string, string> { { "EN", "Bundles" }, { "ES", "Lotes" } } },
         };
 
         /// <summary>

@@ -1,10 +1,46 @@
-﻿﻿using PuppeteerSharp;
+﻿﻿﻿﻿using PuppeteerSharp;
 using Scraping.Common;
 using Scraping.Managers;
 using Scraping.Models;
 using System.Collections.Generic;
 
-await ProcessVillagers();
+while (true)
+{
+    Console.WriteLine("\n--- Stardew Valley Scraper ---");
+    Console.WriteLine("¿Qué te gustaría extraer?");
+    Console.WriteLine("  1. Datos de Aldeanos (Villagers)");
+    Console.WriteLine("  2. Datos de Misiones (Quests)");
+    Console.WriteLine("  3. Datos de la Casa de Campo (Farmhouse)");
+    Console.WriteLine("  4. Extraer todo");
+    Console.WriteLine("  5. Salir");
+    Console.Write("Elige una opción y pulsa Intro: ");
+
+    string? choice = Console.ReadLine();
+
+    switch (choice)
+    {
+        case "1":
+            await ProcessVillagers();
+            break;
+        case "2":
+            await ProcessQuests();
+            break;
+        case "3":
+            await ProcessFarmhouse();
+            break;
+        case "4":
+            await ProcessQuests();
+            await ProcessVillagers();
+            await ProcessFarmhouse();
+            break;
+        case "5":
+            Console.WriteLine("Saliendo del programa...");
+            return;
+        default:
+            Console.WriteLine("Opción no válida. Por favor, elige un número del 1 al 5.");
+            break;
+    }
+}
 
 async Task ProcessVillagers()
 {
@@ -65,4 +101,64 @@ async Task ProcessVillagers()
             }
         }
     });
+}
+
+async Task ProcessQuests()
+{
+    Console.WriteLine("--- Iniciando Scraper de Misiones ---");
+    IBrowser? browser = null;
+    try
+    {
+        using var browserFetcher = new BrowserFetcher();
+        await browserFetcher.DownloadAsync();
+        browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+        var manager = new QuestsManager(browser);
+
+        foreach (var lang in GeneralConstants.LANGUAGES)
+        {
+            string langCode = string.IsNullOrEmpty(lang) ? "EN" : lang.Replace(".", "").ToUpper();
+            Console.WriteLine($"Extrayendo misiones para el idioma: {langCode}");
+            await manager.ScrapeAndSaveQuests(langCode);
+            Console.WriteLine($"[ÉXITO] Misiones guardadas para el idioma {langCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERROR FATAL] El scraper de misiones falló: {ex.Message}");
+    }
+    finally
+    {
+        if (browser != null) await browser.CloseAsync();
+        Console.WriteLine("--- Scraper de Misiones Finalizado ---");
+    }
+}
+
+async Task ProcessFarmhouse()
+{
+    Console.WriteLine("--- Iniciando Scraper de la Casa de Campo ---");
+    IBrowser? browser = null;
+    try
+    {
+        using var browserFetcher = new BrowserFetcher();
+        await browserFetcher.DownloadAsync();
+        browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+        var manager = new FarmhouseManager(browser);
+
+        foreach (var lang in GeneralConstants.LANGUAGES)
+        {
+            string langCode = string.IsNullOrEmpty(lang) ? "EN" : lang.Replace(".", "").ToUpper();
+            Console.WriteLine($"Extrayendo datos de la casa de campo para el idioma: {langCode}");
+            await manager.ScrapeAndSaveFarmhouse(langCode);
+            Console.WriteLine($"[ÉXITO] Datos de la casa de campo guardados para el idioma {langCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERROR FATAL] El scraper de la casa de campo falló: {ex.Message}");
+    }
+    finally
+    {
+        if (browser != null) await browser.CloseAsync();
+        Console.WriteLine("--- Scraper de la Casa de Campo Finalizado ---");
+    }
 }
