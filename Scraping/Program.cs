@@ -11,8 +11,9 @@ while (true)
     Console.WriteLine("  1. Datos de Aldeanos (Villagers)");
     Console.WriteLine("  2. Datos de Misiones (Quests)");
     Console.WriteLine("  3. Datos de la Casa de Campo (Farmhouse)");
-    Console.WriteLine("  4. Extraer todo");
-    Console.WriteLine("  5. Salir");
+    Console.WriteLine("  4. Datos de Animales (Animals)");
+    Console.WriteLine("  5. Extraer todo");
+    Console.WriteLine("  6. Salir");
     Console.Write("Elige una opción y pulsa Intro: ");
 
     string? choice = Console.ReadLine();
@@ -29,15 +30,19 @@ while (true)
             await ProcessFarmhouse();
             break;
         case "4":
+            await ProcessAnimals();
+            break;
+        case "5":
             await ProcessQuests();
             await ProcessVillagers();
             await ProcessFarmhouse();
+            await ProcessAnimals();
             break;
-        case "5":
+        case "6":
             Console.WriteLine("Saliendo del programa...");
             return;
         default:
-            Console.WriteLine("Opción no válida. Por favor, elige un número del 1 al 5.");
+            Console.WriteLine("Opción no válida. Por favor, elige un número del 1 al 6.");
             break;
     }
 }
@@ -160,5 +165,35 @@ async Task ProcessFarmhouse()
     {
         if (browser != null) await browser.CloseAsync();
         Console.WriteLine("--- Scraper de la Casa de Campo Finalizado ---");
+    }
+}
+
+async Task ProcessAnimals()
+{
+    Console.WriteLine("--- Iniciando Scraper de Animales ---");
+    IBrowser? browser = null;
+    try
+    {
+        using var browserFetcher = new BrowserFetcher();
+        await browserFetcher.DownloadAsync();
+        browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+        var manager = new AnimalsManager(browser);
+
+        foreach (var lang in GeneralConstants.LANGUAGES)
+        {
+            string langCode = string.IsNullOrEmpty(lang) ? "EN" : lang.Replace(".", "").ToUpper();
+            Console.WriteLine($"Extrayendo datos de animales para el idioma: {langCode}");
+            await manager.ScrapeAndSaveAnimals(langCode);
+            Console.WriteLine($"[ÉXITO] Datos de animales guardados para el idioma {langCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERROR FATAL] El scraper de animales falló: {ex.Message}");
+    }
+    finally
+    {
+        if (browser != null) await browser.CloseAsync();
+        Console.WriteLine("--- Scraper de Animales Finalizado ---");
     }
 }

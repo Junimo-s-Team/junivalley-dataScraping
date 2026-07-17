@@ -1,4 +1,4 @@
-﻿﻿namespace Scraping.Common
+﻿namespace Scraping.Common
 {
     public static class WikiKeys
     {
@@ -35,8 +35,15 @@
             { "FarmhouseRenovations", new Dictionary<string, string> { { "EN", "Renovations" }, { "ES", "Renovaciones" } } },
             { "SpouseRooms", new Dictionary<string, string> { { "EN", "Spouse.2FRoommate_Rooms" }, { "ES", "Habitaciones_para_c.C3.B3nyuges.2Fcompa.C3.B1eros" } } },
 
-            // MARK: - Bundles
-            { "Bundles", new Dictionary<string, string> { { "EN", "Bundles" }, { "ES", "Lotes" } } },
+            // MARK: - Animals
+            { "Pets", new Dictionary<string, string> { { "EN", "Pets" }, { "ES", "Mascotas" } } },
+            { "Horse", new Dictionary<string, string> { { "EN", "Horse" }, { "ES", "Caballo" } } },
+            { "CoopAnimals", new Dictionary<string, string> { { "EN", "Coop_Animals" }, { "ES", "Animales_de_corral" } } },
+            { "BarnAnimals", new Dictionary<string, string> { { "EN", "Barn_Animals" }, { "ES", "Animales_de_establo" } } },
+            { "OtherAnimals", new Dictionary<string, string> { { "EN", "Other_Animals" }, { "ES", "Otros_Animales" } } },
+            { "CatGifts", new Dictionary<string, string> { { "EN", "Cat Gifts" }, { "ES", "Regalos de gatos" } } },
+            { "DogGifts", new Dictionary<string, string> { { "EN", "Dog Gifts" }, { "ES", "Regalos de perros" } } },
+            { "TurtleGifts", new Dictionary<string, string> { { "EN", "Turtle Gifts" }, { "ES", "Regalos de tortuga" } } },
         };
 
         /// <summary>
