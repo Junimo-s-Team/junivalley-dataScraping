@@ -375,11 +375,11 @@ namespace Scraping.Managers
                     // Maneja casos especiales como "Any Fruit"
                     if (text.ToLower().Contains("any fruit"))
                     {
-                        IngredientsModel ingredientsBasicModel = new IngredientsModel
+                        ingredientList.Add(new IngredientsModel
                         {
                             Name = "Any Fruit",
                             Quantity = "1"
-                        };
+                        });
                         continue;
                     }
 
